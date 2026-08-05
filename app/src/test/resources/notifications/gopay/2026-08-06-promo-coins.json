@@ -1,0 +1,16 @@
+{
+  "packageName": "com.gojek.gopay",
+  "channelId": "promotional_notifications",
+  "template": "android.app.Notification$BigTextStyle",
+  "title": "Criiing! Kamu dapet GoPay Coins 💰",
+  "text": "Cihuy, kamu dapet 26 GoPay Coins! Klik buat liat detailnya.",
+  "bigText": null,
+  "postTime": 1785949053779,
+  "capturedAt": "2026-08-06T00:57:33+07:00",
+  "expectedSignal": "BUKAN",
+  "notes": [
+    "The negative fixture that matters most: it arrived 88ms before a real receipt, on the same channel, from the same package.",
+    "'26 GoPay Coins' is a bare number with a currency-shaped word next to it. Anything that treats a number as an amount without a Rp/IDR marker will book 26 rupiah of income that never existed.",
+    "Coins are not money in this ledger and never become a transaction."
+  ]
+}

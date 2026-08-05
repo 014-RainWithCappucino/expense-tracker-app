@@ -1,0 +1,16 @@
+{
+  "packageName": "com.gojek.gopay",
+  "channelId": "promotional_notifications",
+  "template": "android.app.Notification$BigTextStyle",
+  "title": "Pembayaran berhasil!",
+  "text": "Mantaap, kamu barusan bayar Rp26.374 ke PT KEPO SOLUSI INDONESIA.",
+  "bigText": null,
+  "postTime": 1785949053867,
+  "capturedAt": "2026-08-06T00:57:33+07:00",
+  "expectedSignal": "TRANSAKSI",
+  "notes": [
+    "A plain KELUAR from GoPay. Nothing to match, no pair.",
+    "The merchant is the legal entity name, not a storefront name — keterangan will read 'PT KEPO SOLUSI INDONESIA' unless it gets prettified later.",
+    "Copy voice matters for the parser: 'Mantaap, kamu barusan bayar X ke Y.' The amount sits mid-sentence, so an anchor on the start of the string would miss it."
+  ]
+}

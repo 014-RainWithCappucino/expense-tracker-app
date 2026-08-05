@@ -1,0 +1,17 @@
+{
+  "packageName": "com.gojek.gopay",
+  "channelId": "promotional_notifications",
+  "template": "android.app.Notification$BigTextStyle",
+  "title": "Transfer berhasil",
+  "text": "Rp8.127 udah dikirim ke BCA NAMA PENERIMA.",
+  "bigText": null,
+  "postTime": 1785949111984,
+  "capturedAt": "2026-08-06T00:58:32+07:00",
+  "expectedSignal": "TRANSAKSI",
+  "notes": [
+    "The outgoing half of a GoPay -> BCA transfer. Its pair is bca/2026-08-06-pemasukan-transfer, 2.6s later.",
+    "Recipient name redacted; the original read 'BCA <full name>'. The 'BCA ' prefix is GoPay's, not part of the name.",
+    "Amount shape: 'Rp' with no space, dot thousands, no decimals.",
+    "On its own this looks like KELUAR from GoPay. Only the matcher can promote it to PINDAH_DOMPET."
+  ]
+}

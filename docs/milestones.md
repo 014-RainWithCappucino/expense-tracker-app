@@ -6,16 +6,22 @@ Markers: `[x]` done · `[>]` active · `[ ]` not started.
 A milestone is **done only when it runs on the device** — compiling is not done.
 
 - [x] M0 — Skeleton: Gradle, Hilt, theme tokens, Room + SQLCipher, `TimeProvider`
-- [>] M1 — Notification listener, raw capture, diagnostics screen. Ship to the phone and let the corpus accumulate
+- [x] M1 — Notification listener, raw capture, diagnostics screen. Runs on the phone, real corpus started
   - [x] `SourceRegistry` whitelist + `ContentHasher` dedup
   - [x] `TxNotificationListenerService` + `CaptureRepository`
   - [x] Diagnostics screen with discovery leaderboard
   - [x] `assembleDebug` green, APK produced
   - [x] Runs on the Infinix (Android 15, API 35). DB encrypted, listener bound, leaderboard proven with a synthetic notification
-  - [>] Collect real BCA / GoPay / OVO notifications — needs the phone connected and time
-  - [ ] Read real package names off the leaderboard, fix `SourceRegistry`, flip `verified`
-- [ ] Icon fix — density rasters committed, still shows the stock robot, unverified on device
-- [ ] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
+  - [x] Real notifications captured 2026-08-06: 2 GoPay receipts, 1 BCA receipt, 1 GoPay ad — including a GoPay→BCA transfer pair 2.6s apart
+  - [x] `com.bca` and `com.gojek.gopay` verified on hardware. myBCA / Gojek / OVO are installed but have not fired yet
+  - [x] `TransactionSignal` separates receipts from marketing without discarding anything
+- [x] Icon fix — verified on the launcher. The resource was always correct; XOS was serving a stale cached icon
+- [>] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
+  - [x] `BalanceCalculator`, `PeriodTotals`, `DayWindow` + the §11 property tests
+  - [>] Wallet seed, ledger repository, DAO queries for a day window
+  - [ ] Home (01) — today's spend, wallet balances, recent rows, nav graph
+  - [ ] Catat cash (02) incl. the note field
+  - [ ] Transaction detail sheet — note edited in place, soft delete
 - [ ] M3 — Parsers against the real corpus, dedup, transfer matcher, admin-fee split
 - [ ] M4 — Reminder engine: alarms, FGS, vibration, ongoing notification, blacklist, queue
 - [ ] M5 — Reconcile wizard (06), Dompet (07)

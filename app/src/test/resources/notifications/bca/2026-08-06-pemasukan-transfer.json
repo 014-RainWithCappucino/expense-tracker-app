@@ -1,0 +1,19 @@
+{
+  "packageName": "com.bca",
+  "channelId": "fcm_fallback_notification_channel",
+  "template": "android.app.Notification$BigTextStyle",
+  "title": "BCA mobile",
+  "text": "Financial Diary: Pemasukan sebesar IDR 8,127.00 dari ***PET **AK ***GSA di kategori Transfer Rekening.",
+  "bigText": null,
+  "postTime": 1785949114623,
+  "capturedAt": "2026-08-06T00:58:34+07:00",
+  "expectedSignal": "TRANSAKSI",
+  "notes": [
+    "The incoming half of the GoPay -> BCA transfer; its pair is gopay/2026-08-06-transfer-keluar, 2.639s earlier.",
+    "Amount shape is the opposite of GoPay's: 'IDR ' with a space, comma thousands, two decimals. Both normalise to 8127 whole rupiah.",
+    "'***PET **AK ***GSA' is BCA's masking of 'DOMPET ANAK BANGSA' — GoPay's legal entity. The mask is stable enough to identify the counterparty wallet.",
+    "The title is the app name, not the event: 'BCA mobile' carries no information, so everything has to come out of text.",
+    "'di kategori Transfer Rekening' is BCA's own categorisation. It is not the merchant and does not belong in keterangan.",
+    "Channel is the Firebase fallback channel, which suggests BCA never declared a channel of its own — do not rely on it staying that way."
+  ]
+}
