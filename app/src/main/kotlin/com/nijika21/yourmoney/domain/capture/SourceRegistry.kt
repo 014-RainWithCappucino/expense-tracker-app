@@ -9,25 +9,39 @@ package com.nijika21.yourmoney.domain.capture
  * is what the setup screen promises the user, so it is a correctness
  * requirement, not manners.
  *
- * ⚠ Every package below is UNVERIFIED — taken from memory, exactly as TDD
- * §3.4 warns not to trust. They are candidates, and [DiscoveryLog] is how
- * they get confirmed on the real device instead of guessed. Do not write
- * parsers against any of these until the diagnostics screen has shown the
- * package actually delivering transaction notifications.
+ * `verified` means *this exact package was seen delivering a real transaction
+ * notification on the device*, not "we are fairly sure". Unverified entries are
+ * still captured — a candidate that never fires costs nothing, while a missing
+ * one loses transactions silently, which is the failure §3.4 warns about.
  */
 object SourceRegistry {
 
     data class Candidate(
         val packageName: String,
         val label: String,
+        /** Confirmed on hardware, with the date and the wording in [note]. */
         val verified: Boolean = false,
+        val note: String? = null,
     )
 
     val candidates: List<Candidate> = listOf(
-        Candidate("com.bca", "BCA (mobile)"),
+        Candidate(
+            packageName = "com.bca",
+            label = "BCA (mobile)",
+            verified = true,
+            note = "2026-08-06: \"Financial Diary: Pemasukan sebesar IDR 8,127.00 …\", " +
+                "channel fcm_fallback_notification_channel, BigTextStyle.",
+        ),
         Candidate("com.bca.mybca.omni.android", "myBCA"),
         Candidate("com.gojek.app", "Gojek / GoPay"),
-        Candidate("com.gojek.gopay", "GoPay (standalone)"),
+        Candidate(
+            packageName = "com.gojek.gopay",
+            label = "GoPay (standalone)",
+            verified = true,
+            note = "2026-08-06: \"Transfer berhasil\" / \"Pembayaran berhasil!\", " +
+                "channel promotional_notifications — the channel is useless for " +
+                "filtering, receipts and ads share it.",
+        ),
         Candidate("ovo.id", "OVO"),
     )
 

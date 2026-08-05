@@ -51,6 +51,12 @@ class TxNotificationListenerService : NotificationListenerService() {
         val text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
         val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
 
+        // Group summaries carry no content of their own — GoPay's `ranker_group`
+        // arrives with title, text and bigText all null, and stored one blank row
+        // in the corpus for nothing. Skipping emptiness is not a heuristic and
+        // loses no data: there is nothing here to parse, now or in M3.
+        if (title.isNullOrBlank() && text.isNullOrBlank() && bigText.isNullOrBlank()) return
+
         val pkg = notification.packageName
         val key = notification.key
         val postTime = notification.postTime

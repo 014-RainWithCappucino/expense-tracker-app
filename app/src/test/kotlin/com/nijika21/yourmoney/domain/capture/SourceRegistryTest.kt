@@ -61,16 +61,42 @@ class SourceRegistryTest {
     }
 
     /**
-     * Guard rail for M3. Every package name in the registry is still a guess
-     * (§3.4); writing parsers against an unverified name is the wasted work
-     * the M1-before-M3 ordering exists to prevent.
+     * Guard rail for M3, in its post-M1 form. `verified` used to be required to
+     * be false everywhere; `com.bca` and `com.gojek.gopay` were confirmed on the
+     * device on 2026-08-06, so the rule is now about evidence rather than
+     * abstinence: flipping the flag costs you a note saying what you saw.
+     *
+     * Writing a parser against an unverified package name is the wasted work the
+     * M1-before-M3 ordering exists to prevent.
      */
     @Test
-    fun `no candidate is marked verified until the device says so`() {
+    fun `a verified candidate has to carry its evidence`() {
         for (candidate in SourceRegistry.candidates) {
+            if (!candidate.verified) continue
+            assertTrue(
+                "${candidate.packageName} is marked verified with no note — record the " +
+                    "date and the wording you actually saw on the device",
+                !candidate.note.isNullOrBlank(),
+            )
+        }
+    }
+
+    @Test
+    fun `the two sources confirmed on hardware stay verified`() {
+        // A regression guard with a purpose: if a refactor resets these, M3 has
+        // no idea which package names were guesses and which were proven.
+        val verified = SourceRegistry.candidates.filter { it.verified }.map { it.packageName }
+        assertTrue("com.bca lost its verified flag", "com.bca" in verified)
+        assertTrue("com.gojek.gopay lost its verified flag", "com.gojek.gopay" in verified)
+    }
+
+    @Test
+    fun `packages never seen on the device are not claimed as verified`() {
+        val unproven = listOf("com.bca.mybca.omni.android", "com.gojek.app", "ovo.id")
+        for (pkg in unproven) {
+            val candidate = SourceRegistry.candidates.first { it.packageName == pkg }
             assertFalse(
-                "${candidate.packageName} claims to be verified — confirm it on the " +
-                    "device via the diagnostics screen before flipping this",
+                "$pkg has never delivered a notification on the device",
                 candidate.verified,
             )
         }

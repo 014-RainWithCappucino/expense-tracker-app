@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
+import com.nijika21.yourmoney.domain.capture.CaptureSignal
 import com.nijika21.yourmoney.domain.capture.DiscoveredSource
 import com.nijika21.yourmoney.domain.capture.SourceRegistry
 import com.nijika21.yourmoney.domain.model.RawNotification
@@ -119,9 +120,9 @@ fun DiagnosticsScreen(
             }
         }
 
-        item { SectionTitle("Notifikasi tertangkap (${state.capturedCount})") }
+        item { SectionTitle("Transaksi (${state.transaksi.size})") }
 
-        if (state.recent.isEmpty()) {
+        if (state.transaksi.isEmpty()) {
             item {
                 Text(
                     "Belum ada. Setelah izin aktif, transaksi berikutnya akan muncul di sini.",
@@ -130,7 +131,42 @@ fun DiagnosticsScreen(
                 )
             }
         } else {
-            items(state.recent, key = { it.id }) { raw -> RawRow(raw) }
+            items(state.transaksi, key = { it.raw.id }) { row -> RawRow(row.raw, row.signal) }
+        }
+
+        if (state.mungkin.isNotEmpty()) {
+            item {
+                SectionTitle("Mungkin transaksi (${state.mungkin.size})")
+                Text(
+                    "Ada nominalnya, tapi tidak ada kata yang bilang transaksinya selesai. " +
+                        "Perlu dilihat sendiri.",
+                    style = type.caption,
+                    color = colors.textMuted,
+                )
+            }
+            items(state.mungkin, key = { it.raw.id }) { row -> RawRow(row.raw, row.signal) }
+        }
+
+        if (state.bukan.isNotEmpty()) {
+            item {
+                SectionTitle("Bukan transaksi (${state.bukan.size})")
+                Text(
+                    "Iklan dan notifikasi biasa. Tetap disimpan — filternya cuma perkiraan, " +
+                        "jadi kalau ada yang salah masuk sini, masih bisa dibaca.",
+                    style = type.caption,
+                    color = colors.textMuted,
+                )
+            }
+            items(state.bukan, key = { it.raw.id }) { row -> RawRow(row.raw, row.signal) }
+        }
+
+        item {
+            Spacer(Modifier.height(dimens.gapM))
+            Text(
+                "${state.capturedCount} notifikasi tersimpan seluruhnya.",
+                style = type.caption,
+                color = colors.textMuted,
+            )
         }
 
         item { Spacer(Modifier.height(dimens.gapXl)) }
@@ -255,10 +291,18 @@ private fun DiscoveredRow(source: DiscoveredSource) {
 }
 
 @Composable
-private fun RawRow(raw: RawNotification) {
+private fun RawRow(raw: RawNotification, signal: CaptureSignal) {
     val colors = YourMoneyTheme.colors
     val type = YourMoneyTheme.typography
     val dimens = YourMoneyTheme.dimens
+
+    // Noise is dimmed rather than hidden, so a misclassified receipt is still
+    // findable — the whole corpus stays readable either way.
+    val headerColor = when (signal) {
+        CaptureSignal.TRANSAKSI -> colors.accentLime
+        CaptureSignal.MUNGKIN -> colors.warning
+        CaptureSignal.BUKAN -> colors.textMuted
+    }
 
     Column(
         modifier = Modifier
@@ -272,7 +316,7 @@ private fun RawRow(raw: RawNotification) {
             Text(
                 SourceRegistry.labelFor(raw.packageName) ?: raw.packageName,
                 style = type.label,
-                color = colors.accentLime,
+                color = headerColor,
                 modifier = Modifier.weight(1f),
             )
             Text(

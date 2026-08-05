@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nijika21.yourmoney.data.repository.CaptureRepository
+import com.nijika21.yourmoney.domain.capture.CaptureSignal
 import com.nijika21.yourmoney.domain.capture.DiscoveredSource
 import com.nijika21.yourmoney.domain.capture.SourceRegistry
+import com.nijika21.yourmoney.domain.capture.TransactionSignal
 import com.nijika21.yourmoney.domain.model.RawNotification
 import com.nijika21.yourmoney.platform.notification.TxNotificationListenerService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,12 +20,35 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** One captured notification plus how likely it is to be real money moving. */
+data class CapturedRow(
+    val raw: RawNotification,
+    val signal: CaptureSignal,
+)
+
 data class DiagnosticsUiState(
     val listenerEnabled: Boolean = false,
     val capturedCount: Long = 0,
     val recent: List<RawNotification> = emptyList(),
     val discovered: List<DiscoveredSource> = emptyList(),
 ) {
+    /**
+     * Classified once, here, rather than per row during composition — and split
+     * three ways because both sources send far more marketing than receipts.
+     * Reading the raw list in arrival order means scrolling past GoPay Coins ads
+     * to find the two transactions that matter.
+     */
+    private val captured: List<CapturedRow>
+        get() = recent.map { raw ->
+            CapturedRow(raw, TransactionSignal.classify(raw.title, raw.text, raw.bigText))
+        }
+
+    val transaksi: List<CapturedRow> get() = captured.filter { it.signal == CaptureSignal.TRANSAKSI }
+
+    val mungkin: List<CapturedRow> get() = captured.filter { it.signal == CaptureSignal.MUNGKIN }
+
+    /** Kept and shown, never hidden: the classifier is a heuristic and can be wrong. */
+    val bukan: List<CapturedRow> get() = captured.filter { it.signal == CaptureSignal.BUKAN }
     /** Candidate packages that have actually delivered something. */
     val confirmedCandidates: List<String>
         get() = SourceRegistry.candidates

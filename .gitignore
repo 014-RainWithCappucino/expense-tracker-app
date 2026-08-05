@@ -29,3 +29,8 @@ Thumbs.db
 
 # .md
 handoff.md
+
+# Raw notification dumps pulled off the device. These hold real amounts, real
+# merchant names and the account holder's own name — the committed fixtures in
+# src/test/resources/notifications/ are the redacted versions of the same data.
+corpus-raw/
