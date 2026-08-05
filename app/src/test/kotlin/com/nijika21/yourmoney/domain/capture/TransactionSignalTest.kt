@@ -88,12 +88,18 @@ class TransactionSignalTest {
         )
     }
 
+    /**
+     * The names here are stand-ins. Social and chat notifications are the bulk of
+     * what the listener sees, and committing a captured one would put real
+     * people's names in the repo for no test value — the shape is what matters,
+     * not who sent it.
+     */
     @Test
     fun `chat and delivery notifications carry no amount`() {
         assertEquals(CaptureSignal.BUKAN, signal("Gojek", "Driver kamu sudah sampai."))
         assertEquals(
             CaptureSignal.BUKAN,
-            signal("Gani Tio", "Anda mendapat 37 notifikasi baru dari Dwi'e, Romulo dan lainnya."),
+            signal("Nama Orang", "Anda mendapat 37 notifikasi baru dari A, B dan lainnya."),
         )
     }
 

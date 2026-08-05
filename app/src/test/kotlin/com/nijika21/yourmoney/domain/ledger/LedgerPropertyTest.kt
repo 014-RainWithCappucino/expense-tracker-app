@@ -25,10 +25,9 @@ class LedgerPropertyTest {
 
     private val wallets = listOf(
         Wallet("bca", "BCA", WalletJenis.BANK, terhubung = true, saldoAwal = 2_500_000, urutan = 0),
-        Wallet("gopay1", "GoPay 1", WalletJenis.EWALLET, terhubung = true, saldoAwal = 150_000, urutan = 1),
-        Wallet("gopay2", "GoPay 2", WalletJenis.EWALLET, terhubung = true, saldoAwal = 40_000, urutan = 2),
-        Wallet("ovo", "OVO", WalletJenis.EWALLET, terhubung = true, saldoAwal = 75_000, urutan = 3),
-        Wallet("tunai", "Tunai", WalletJenis.CASH, terhubung = false, saldoAwal = 300_000, urutan = 4),
+        Wallet("gopay", "GoPay", WalletJenis.EWALLET, terhubung = true, saldoAwal = 150_000, urutan = 1),
+        Wallet("ovo", "OVO", WalletJenis.EWALLET, terhubung = true, saldoAwal = 75_000, urutan = 2),
+        Wallet("tunai", "Tunai", WalletJenis.CASH, terhubung = false, saldoAwal = 300_000, urutan = 3),
     )
 
     private fun generate(seed: Long, count: Int): List<Transaction> {

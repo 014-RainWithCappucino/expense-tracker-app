@@ -108,29 +108,44 @@ class LedgerRepository @Inject constructor(
     suspend fun hapus(id: String) = transactionDao.softDelete(id, time.nowMillis())
 
     /**
-     * Puts the user's five wallets in place on first run.
+     * Puts the user's wallets in place before the ledger has anything in it.
      *
      * Checked on every start rather than in a Room `onCreate` callback, because
      * the database on the phone was created by M1 and would never fire `onCreate`
      * again — an `onCreate`-only seed would leave the existing install with no
      * wallets and no way to get any until M8's setup wizard.
      *
-     * `saldoAwal` is 0 for all five. That is not a placeholder: balance is
+     * The guard is **"no transactions yet"**, not "no wallets yet". Until the
+     * first row exists the wallet list is still setup rather than data, so a
+     * corrected default set should replace the old one instead of stranding it on
+     * the device — which is exactly what happened when GoPay went from two
+     * wallets to one. The moment anything is recorded this stops touching
+     * anything, and it disappears entirely once M8 owns setup.
+     *
+     * `saldoAwal` is 0 for all of them. That is not a placeholder: balance is
      * derived (§6.3), so a wrong opening balance would silently misstate every
      * figure afterwards. Reconcile (06) and Dompet (07) are where the real
      * opening numbers get entered, by the one person who knows them.
      */
     suspend fun seedWalletsIfEmpty() {
-        if (walletDao.count() > 0) return
+        if (transactionDao.count() > 0) return
+
+        val existing = walletDao.allIds().toSet()
+        val wanted = defaultWallets.map { it.id }.toSet()
+        if (existing == wanted) return
+
+        // Nothing references these yet, so replacing the set is safe.
+        walletDao.deleteAll()
         walletDao.insertAll(defaultWallets.map { it.toEntity() })
     }
 
     private companion object {
         /**
-         * Two GoPay wallets, one package. `com.gojek.gopay` cannot say *which*
-         * balance moved, so a captured GoPay notification is inherently ambiguous
-         * between these two — M3 has to ask rather than guess. Recorded here
-         * because the hint field makes it look decided when it is not.
+         * **One GoPay, not two.** The second account never appears in
+         * notifications — only the signed-in one posts them — so a second GoPay
+         * wallet would be a balance that capture can never move and reconcile
+         * could never explain. If it is ever needed it belongs in Dompet (07) as
+         * a hand-managed wallet, entered deliberately.
          */
         val defaultWallets = listOf(
             Wallet(
@@ -143,21 +158,12 @@ class LedgerRepository @Inject constructor(
                 packageHint = "com.bca",
             ),
             Wallet(
-                id = "gopay-1",
-                nama = "GoPay 1",
+                id = "gopay",
+                nama = "GoPay",
                 jenis = WalletJenis.EWALLET,
                 terhubung = true,
                 saldoAwal = 0,
                 urutan = 1,
-                packageHint = "com.gojek.gopay",
-            ),
-            Wallet(
-                id = "gopay-2",
-                nama = "GoPay 2",
-                jenis = WalletJenis.EWALLET,
-                terhubung = true,
-                saldoAwal = 0,
-                urutan = 2,
                 packageHint = "com.gojek.gopay",
             ),
             Wallet(
@@ -166,7 +172,7 @@ class LedgerRepository @Inject constructor(
                 jenis = WalletJenis.EWALLET,
                 terhubung = true,
                 saldoAwal = 0,
-                urutan = 3,
+                urutan = 2,
                 packageHint = "ovo.id",
             ),
             Wallet(
@@ -175,7 +181,7 @@ class LedgerRepository @Inject constructor(
                 jenis = WalletJenis.CASH,
                 terhubung = false,
                 saldoAwal = 0,
-                urutan = 4,
+                urutan = 3,
                 packageHint = null,
             ),
         )

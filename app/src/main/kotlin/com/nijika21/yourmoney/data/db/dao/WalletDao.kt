@@ -38,6 +38,17 @@ interface WalletDao {
     @Query("SELECT COUNT(*) FROM wallet")
     suspend fun count(): Long
 
+    @Query("SELECT id FROM wallet")
+    suspend fun allIds(): List<String>
+
+    /**
+     * Only ever called while the transaction table is empty — see
+     * `LedgerRepository.seedWalletsIfEmpty`. A wallet with history behind it is
+     * never deleted; §6.4 makes everything else in this app a soft delete.
+     */
+    @Query("DELETE FROM wallet")
+    suspend fun deleteAll()
+
     /**
      * The balance rule from TDD §6.3, verbatim. `transaction` is a SQL
      * reserved word, hence the backticks.

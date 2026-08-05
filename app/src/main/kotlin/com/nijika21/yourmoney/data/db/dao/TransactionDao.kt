@@ -34,6 +34,14 @@ interface TransactionDao {
     fun observeCount(): Flow<Long>
 
     /**
+     * Counts soft-deleted rows too, deliberately: the seeder uses this to decide
+     * whether the ledger has ever been written to, and a deleted row still means
+     * it has.
+     */
+    @Query("SELECT COUNT(*) FROM `transaction`")
+    suspend fun count(): Long
+
+    /**
      * Half-open window, `[from, until)` — see `DayWindow`. An inclusive upper
      * bound needs a "23:59:59.999" and then a midnight transaction lands in two
      * days or neither.
