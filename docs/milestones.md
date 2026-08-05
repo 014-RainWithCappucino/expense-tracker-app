@@ -11,7 +11,8 @@ A milestone is **done only when it runs on the device** — compiling is not don
   - [x] `TxNotificationListenerService` + `CaptureRepository`
   - [x] Diagnostics screen with discovery leaderboard
   - [x] `assembleDebug` green, APK produced
-  - [>] Install on the Infinix and confirm capture — blocked on USB debugging
+  - [x] Runs on the Infinix (Android 15, API 35). DB encrypted, listener bound, leaderboard proven with a synthetic notification
+  - [>] Seed discovery from notifications already posted at connect time
   - [ ] Read real package names off the leaderboard, fix `SourceRegistry`, flip `verified`
 - [ ] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
 - [ ] M3 — Parsers against the real corpus, dedup, transfer matcher, admin-fee split
