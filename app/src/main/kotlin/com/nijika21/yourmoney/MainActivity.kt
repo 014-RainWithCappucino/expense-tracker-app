@@ -6,27 +6,21 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nijika21.yourmoney.platform.notification.TxNotificationListenerService
-import com.nijika21.yourmoney.ui.diagnostics.DiagnosticsScreen
-import com.nijika21.yourmoney.ui.diagnostics.DiagnosticsViewModel
+import com.nijika21.yourmoney.ui.nav.YourMoneyNavGraph
 import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * M1 has no navigation graph yet — one screen, deliberately. The nav graph
- * arrives with M2 (Home) and grows a PIN gate in M7.
+ * One activity, one nav graph. The PIN gate becomes the graph's start destination
+ * in M7 — every entry point funnels through it, so there is exactly one shape of
+ * graph and one path to test (§4).
  *
- * `FLAG_SECURE` is *not* set here yet: it belongs to M7 (§6.1, §15), and
- * setting it now would block the screenshots that make M1's corpus review
- * easier to share.
+ * `FLAG_SECURE` is still not set here: it belongs to M7 (§6.1), and setting it now
+ * would block the screenshots that make reviewing the captured corpus possible.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    private val viewModel: DiagnosticsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -34,21 +28,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             YourMoneyTheme {
-                val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DiagnosticsScreen(
-                    state = state,
-                    onOpenListenerSettings = ::openListenerSettings,
-                    onClearDiscovered = viewModel::clearDiscovered,
-                )
+                YourMoneyNavGraph(onOpenListenerSettings = ::openListenerSettings)
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Notification access is a Settings toggle with no result callback,
-        // so returning to the foreground is the only moment we can re-read it.
-        viewModel.refreshListenerState()
     }
 
     private fun openListenerSettings() {
