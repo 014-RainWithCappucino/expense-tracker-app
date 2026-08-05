@@ -34,3 +34,8 @@ handoff.md
 # merchant names and the account holder's own name — the committed fixtures in
 # src/test/resources/notifications/ are the redacted versions of the same data.
 corpus-raw/
+
+# Local agent config and scratch. The statusline reads docs/milestones.md, which
+# is committed — the tooling around it is this machine's business, not the repo's.
+.claude/
+graphify-out/
