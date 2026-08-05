@@ -34,6 +34,24 @@ interface TransactionDao {
     fun observeCount(): Flow<Long>
 
     /**
+     * Half-open window, `[from, until)` — see `DayWindow`. An inclusive upper
+     * bound needs a "23:59:59.999" and then a midnight transaction lands in two
+     * days or neither.
+     */
+    @Query(
+        """
+        SELECT * FROM `transaction`
+        WHERE deletedAt IS NULL AND waktu >= :from AND waktu < :until
+        ORDER BY waktu DESC
+        """,
+    )
+    fun observeBetween(from: Long, until: Long): Flow<List<TransactionEntity>>
+
+    /** Drives the detail sheet, so an edit made inside it is reflected live. */
+    @Query("SELECT * FROM `transaction` WHERE id = :id")
+    fun observeById(id: String): Flow<TransactionEntity?>
+
+    /**
      * Soft delete (§6.4). Nothing in the ledger is ever physically removed —
      * corrections are a first-class concept and the audit trail is the point.
      */
