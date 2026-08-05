@@ -1,14 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Placeholder mark: a lime "Rp" bar. Replace when the real icon exists. -->
+<!--
+  The mark: a "Y" over two lime strokes — the yen/yuan currency sign, and the
+  Y of "Your Money". Both bars are load-bearing: one bar is not a currency
+  symbol, it is just an underline.
+
+  Geometry is measured from the reference art (112x116 canvas, 80x80 icon)
+  and mapped onto the adaptive-icon viewport by
+      target = (reference - (57.5, 58.5)) * 0.9 + 54
+  which lands the whole mark inside the 66dp safe zone, so no launcher mask
+  can clip it.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!--
+      Y as a filled outline rather than strokes, so the arms keep their flat
+      angled cuts and the stem stays a constant 5.4 wide.
+      Traced: outer-top-left, inner-top-left, inner apex, inner-top-right,
+      outer-top-right, down the right arm, stem right, stem bottom, stem left.
+    -->
     <path
-        android:fillColor="#C8F751"
-        android:pathData="M38,32h18a13,13 0 0,1 0,26h-18z M38,32h9v44h-9z" />
+        android:fillColor="#F3F5F9"
+        android:pathData="M43.65,35.55 L49.95,35.55 L54,44.1 L58.95,35.55 L65.25,35.55 L57.15,49.05 L57.15,60.75 L51.75,60.75 L51.75,49.05 Z" />
+
+    <!-- Upper bar. Round caps reproduce the reference's rounded ends. -->
     <path
-        android:fillColor="#C8F751"
-        android:pathData="M34,62h26v7h-26z" />
+        android:pathData="M41.85,65.25 L67.05,65.25"
+        android:strokeColor="#ACE74E"
+        android:strokeWidth="3.6"
+        android:strokeLineCap="round" />
+
+    <!-- Lower bar. The 3.6 gap between the two matches the bar height. -->
+    <path
+        android:pathData="M41.85,72.45 L67.05,72.45"
+        android:strokeColor="#ACE74E"
+        android:strokeWidth="3.6"
+        android:strokeLineCap="round" />
 </vector>
