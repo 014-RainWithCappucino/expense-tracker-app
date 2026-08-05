@@ -3,6 +3,7 @@ package com.nijika21.yourmoney.ui.nav
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -13,7 +14,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nijika21.yourmoney.ui.cashentry.CatatScreen
+import com.nijika21.yourmoney.ui.cashentry.CatatViewModel
 import com.nijika21.yourmoney.ui.diagnostics.DiagnosticsScreen
+import com.nijika21.yourmoney.ui.detail.TransactionSheetHost
+import com.nijika21.yourmoney.ui.detail.TransactionSheetViewModel
 import com.nijika21.yourmoney.ui.diagnostics.DiagnosticsViewModel
 import com.nijika21.yourmoney.ui.home.HomeScreen
 import com.nijika21.yourmoney.ui.home.HomeViewModel
@@ -55,11 +60,49 @@ fun YourMoneyNavGraph(
             val viewModel: HomeViewModel = hiltViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+            val sheetViewModel: TransactionSheetViewModel = hiltViewModel()
+            val sheetState by sheetViewModel.state.collectAsStateWithLifecycle()
+
             HomeScreen(
                 state = state,
                 onCatatTunai = { navController.navigate(Destination.CATAT) },
                 onOpenDiagnostics = { navController.navigate(Destination.DIAGNOSTICS) },
-                onOpenTransaction = { /* detail sheet lands next */ },
+                onOpenTransaction = sheetViewModel::open,
+                modifier = Modifier.systemBarsPadding(),
+            )
+
+            // Hosted by the screen, not a route: the list stays visible behind the
+            // scrim, so annotating one of two identical charges is unambiguous.
+            TransactionSheetHost(
+                state = sheetState,
+                onCatatan = sheetViewModel::setCatatan,
+                onDismiss = sheetViewModel::dismiss,
+                onHapus = sheetViewModel::hapus,
+            )
+        }
+
+        composable(Destination.CATAT) {
+            val viewModel: CatatViewModel = hiltViewModel()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+            // One-shot, not state: a saved entry must pop exactly once, and a
+            // "saved" boolean in the state object would pop again on every
+            // recomposition after it.
+            LaunchedEffect(Unit) {
+                viewModel.saved.collect { navController.popBackStack() }
+            }
+
+            CatatScreen(
+                state = state,
+                onDigit = viewModel::appendDigit,
+                onTripleZero = viewModel::appendTripleZero,
+                onBackspace = viewModel::backspace,
+                onJenis = viewModel::setJenis,
+                onKeterangan = viewModel::setKeterangan,
+                onCatatan = viewModel::setCatatan,
+                onWallet = viewModel::setWallet,
+                onSimpan = viewModel::simpan,
+                onBatal = { navController.popBackStack() },
                 modifier = Modifier.systemBarsPadding(),
             )
         }
