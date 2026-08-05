@@ -1,0 +1,520 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "b8e61221389c58b6b253b10c8496213f",
+    "entities": [
+      {
+        "tableName": "wallet",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nama` TEXT NOT NULL, `jenis` TEXT NOT NULL, `terhubung` INTEGER NOT NULL, `saldoAwal` INTEGER NOT NULL, `urutan` INTEGER NOT NULL, `packageHint` TEXT DEFAULT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nama",
+            "columnName": "nama",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jenis",
+            "columnName": "jenis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "terhubung",
+            "columnName": "terhubung",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saldoAwal",
+            "columnName": "saldoAwal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "urutan",
+            "columnName": "urutan",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageHint",
+            "columnName": "packageHint",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "transaction",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `jenis` TEXT NOT NULL, `nominal` INTEGER NOT NULL, `waktu` INTEGER NOT NULL, `walletId` TEXT NOT NULL, `walletTujuanId` TEXT, `keterangan` TEXT NOT NULL, `catatan` TEXT, `sumber` TEXT NOT NULL, `parserId` TEXT, `parserVersion` INTEGER, `rawNotificationId` TEXT, `matchState` TEXT, `groupId` TEXT, `createdAt` INTEGER NOT NULL, `editedAt` INTEGER, `deletedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jenis",
+            "columnName": "jenis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nominal",
+            "columnName": "nominal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "waktu",
+            "columnName": "waktu",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "walletId",
+            "columnName": "walletId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "walletTujuanId",
+            "columnName": "walletTujuanId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "keterangan",
+            "columnName": "keterangan",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "catatan",
+            "columnName": "catatan",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sumber",
+            "columnName": "sumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parserId",
+            "columnName": "parserId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "parserVersion",
+            "columnName": "parserVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "rawNotificationId",
+            "columnName": "rawNotificationId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "matchState",
+            "columnName": "matchState",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "editedAt",
+            "columnName": "editedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_transaction_waktu",
+            "unique": false,
+            "columnNames": [
+              "waktu"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_waktu` ON `${TABLE_NAME}` (`waktu` DESC)"
+          },
+          {
+            "name": "index_transaction_walletId_waktu",
+            "unique": false,
+            "columnNames": [
+              "walletId",
+              "waktu"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_walletId_waktu` ON `${TABLE_NAME}` (`walletId`, `waktu`)"
+          },
+          {
+            "name": "index_transaction_walletTujuanId",
+            "unique": false,
+            "columnNames": [
+              "walletTujuanId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_walletTujuanId` ON `${TABLE_NAME}` (`walletTujuanId`)"
+          },
+          {
+            "name": "index_transaction_jenis",
+            "unique": false,
+            "columnNames": [
+              "jenis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_jenis` ON `${TABLE_NAME}` (`jenis`)"
+          },
+          {
+            "name": "index_transaction_groupId",
+            "unique": false,
+            "columnNames": [
+              "groupId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_groupId` ON `${TABLE_NAME}` (`groupId`)"
+          },
+          {
+            "name": "index_transaction_rawNotificationId",
+            "unique": false,
+            "columnNames": [
+              "rawNotificationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transaction_rawNotificationId` ON `${TABLE_NAME}` (`rawNotificationId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "raw_notification",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `packageName` TEXT NOT NULL, `sbnKey` TEXT NOT NULL, `title` TEXT, `text` TEXT, `bigText` TEXT, `postTime` INTEGER NOT NULL, `contentHash` TEXT NOT NULL, `parseState` TEXT NOT NULL, `parserId` TEXT, `receivedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sbnKey",
+            "columnName": "sbnKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bigText",
+            "columnName": "bigText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "postTime",
+            "columnName": "postTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentHash",
+            "columnName": "contentHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parseState",
+            "columnName": "parseState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parserId",
+            "columnName": "parserId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "receivedAt",
+            "columnName": "receivedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_raw_notification_contentHash",
+            "unique": false,
+            "columnNames": [
+              "contentHash"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_raw_notification_contentHash` ON `${TABLE_NAME}` (`contentHash`)"
+          },
+          {
+            "name": "index_raw_notification_packageName_postTime",
+            "unique": false,
+            "columnNames": [
+              "packageName",
+              "postTime"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_raw_notification_packageName_postTime` ON `${TABLE_NAME}` (`packageName`, `postTime`)"
+          },
+          {
+            "name": "index_raw_notification_parseState",
+            "unique": false,
+            "columnNames": [
+              "parseState"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_raw_notification_parseState` ON `${TABLE_NAME}` (`parseState`)"
+          },
+          {
+            "name": "index_raw_notification_sbnKey",
+            "unique": false,
+            "columnNames": [
+              "sbnKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_raw_notification_sbnKey` ON `${TABLE_NAME}` (`sbnKey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "daily_cash_status",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` TEXT NOT NULL, `status` TEXT NOT NULL, `answeredAt` INTEGER, PRIMARY KEY(`date`))",
+        "fields": [
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "answeredAt",
+            "columnName": "answeredAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "date"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_cash_status_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_cash_status_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ]
+      },
+      {
+        "tableName": "monthly_summary",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`yearMonth` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `pdfUri` TEXT, `generatedAt` INTEGER NOT NULL, PRIMARY KEY(`yearMonth`))",
+        "fields": [
+          {
+            "fieldPath": "yearMonth",
+            "columnName": "yearMonth",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pdfUri",
+            "columnName": "pdfUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "generatedAt",
+            "columnName": "generatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "yearMonth"
+          ]
+        }
+      },
+      {
+        "tableName": "reconcile_event",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `walletId` TEXT NOT NULL, `waktu` INTEGER NOT NULL, `saldoPrediksi` INTEGER NOT NULL, `saldoAsli` INTEGER NOT NULL, `selisih` INTEGER NOT NULL, `transactionId` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "walletId",
+            "columnName": "walletId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "waktu",
+            "columnName": "waktu",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saldoPrediksi",
+            "columnName": "saldoPrediksi",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saldoAsli",
+            "columnName": "saldoAsli",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selisih",
+            "columnName": "selisih",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transactionId",
+            "columnName": "transactionId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_reconcile_event_walletId_waktu",
+            "unique": false,
+            "columnNames": [
+              "walletId",
+              "waktu"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_reconcile_event_walletId_waktu` ON `${TABLE_NAME}` (`walletId`, `waktu`)"
+          }
+        ]
+      },
+      {
+        "tableName": "discovered_source",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `count` INTEGER NOT NULL, `firstSeen` INTEGER NOT NULL, `lastSeen` INTEGER NOT NULL, PRIMARY KEY(`packageName`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstSeen",
+            "columnName": "firstSeen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSeen",
+            "columnName": "lastSeen",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b8e61221389c58b6b253b10c8496213f')"
+    ]
+  }
+}
