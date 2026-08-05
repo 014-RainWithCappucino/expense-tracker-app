@@ -62,9 +62,9 @@ fun TxRow(row: TxRowUi, onClick: (String) -> Unit, modifier: Modifier = Modifier
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = dimens.touchTarget)
+            .heightIn(min = 60.dp)
             .clickable { onClick(row.id) }
-            .padding(vertical = dimens.rowVertical),
+            .padding(vertical = dimens.gapM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -114,18 +114,13 @@ fun WalletRow(row: WalletRowUi, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = dimens.touchTarget)
-            .padding(vertical = dimens.gapS),
+            .heightIn(min = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(row.nama, style = type.rowTitle, color = colors.textPrimary)
             if (!row.terhubung) {
-                Text(
-                    "dicatat sendiri",
-                    style = type.caption,
-                    color = colors.textMuted,
-                )
+                Text("dicatat sendiri", style = type.caption, color = colors.textSecondary)
             }
         }
         Text(row.saldo, style = type.bodyMoney, color = colors.textPrimary)

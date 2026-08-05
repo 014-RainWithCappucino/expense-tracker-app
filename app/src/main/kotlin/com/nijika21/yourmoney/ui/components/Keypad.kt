@@ -24,6 +24,10 @@ import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
  * standing at a warung, the system keyboard cannot show a "000" key, and there is
  * no cursor to place — digits only ever append or drop off the end. It also means
  * no keyboard animation shifting the layout on every entry.
+ *
+ * It sits pinned at the bottom of screen 02, directly under the amount it edits.
+ * The screen hides it while the system IME is up, because two keyboards fighting
+ * for the same strip of screen is how the first version became unusable.
  */
 @Composable
 fun Keypad(
@@ -48,25 +52,37 @@ fun Keypad(
         Row(horizontalArrangement = Arrangement.spacedBy(dimens.gapS)) {
             Key("000", Modifier.weight(1f), onClick = onTripleZero)
             Key("0", Modifier.weight(1f)) { onDigit('0') }
-            // Written out rather than an icon: this screen has no icon set yet,
-            // and a mystery glyph on a money keypad is worse than a word.
-            Key("hapus", Modifier.weight(1f), onClick = onBackspace)
+            // Function key, not a value key, and styled as one — set in the same
+            // heavy figures as the digits it would read as something typeable.
+            Key("hapus", Modifier.weight(1f), function = true, onClick = onBackspace)
         }
     }
 }
 
 @Composable
-private fun Key(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun Key(
+    label: String,
+    modifier: Modifier = Modifier,
+    function: Boolean = false,
+    onClick: () -> Unit,
+) {
     val colors = YourMoneyTheme.colors
 
     Text(
         text = label,
-        style = YourMoneyTheme.typography.titleMoney,
-        color = colors.textPrimary,
+        style = if (function) {
+            YourMoneyTheme.typography.label
+        } else {
+            YourMoneyTheme.typography.titleMoney
+        },
+        color = if (function) colors.textSecondary else colors.textPrimary,
         textAlign = TextAlign.Center,
         modifier = modifier
-            .height(56.dp)
-            .background(colors.card, YourMoneyTheme.shapes.cardSmall)
+            .height(52.dp)
+            .background(
+                if (function) colors.surface else colors.card,
+                YourMoneyTheme.shapes.cardSmall,
+            )
             .clickable(onClick = onClick)
             .wrapContentHeight(Alignment.CenterVertically),
     )

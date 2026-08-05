@@ -1,44 +1,73 @@
 package com.nijika21.yourmoney.ui.cashentry
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.nijika21.yourmoney.domain.model.Jenis
+import com.nijika21.yourmoney.ui.components.BottomActionBar
+import com.nijika21.yourmoney.ui.components.CardGroup
 import com.nijika21.yourmoney.ui.components.Keypad
 import com.nijika21.yourmoney.ui.components.PrimaryButton
-import com.nijika21.yourmoney.ui.components.SecondaryButton
-import com.nijika21.yourmoney.ui.components.SectionHeader
+import com.nijika21.yourmoney.ui.components.RowDivider
+import com.nijika21.yourmoney.ui.components.ScreenHeader
+import com.nijika21.yourmoney.ui.components.SegmentedControl
+import com.nijika21.yourmoney.ui.components.TextAction
 import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
 
 /**
- * Screen 02. Cash has no notification, so this is the only way it enters the
- * ledger — which makes speed the whole design goal: amount, save, done. Every
- * other field is optional and can stay untouched.
+ * Screen 02, rebuilt. The first cut had the amount at the top, the keypad at the
+ * bottom and the whole form in between — so every keypress made the eye travel
+ * the length of the screen, and Simpan sat below the fold behind a scroll. On a
+ * screen whose only job is *amount, save, done*, that is the wrong shape.
+ *
+ * What it is now, top to bottom, all of it fixed except the middle:
+ *
+ * 1. Title and Batal — an exit that is reachable without scrolling.
+ * 2. The amount, immediately above everything that changes it.
+ * 3. Keluar / Masuk as one segmented track, not two free-floating pills.
+ * 4. The details card, collapsed to four quiet rows.
+ * 5. The keypad, pinned.
+ * 6. Simpan, pinned, always visible.
+ *
+ * Only the middle scrolls, and only on a short screen, so the two things that
+ * matter — the number and the save — can never be pushed out of view.
+ *
+ * The wallet chips are gone. They were four permanent choices for a decision that
+ * is "Tunai" almost every time; the wallet is now one row that opens a picker
+ * when it is actually wrong.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CatatScreen(
     state: CatatUiState,
@@ -57,121 +86,182 @@ fun CatatScreen(
     val type = YourMoneyTheme.typography
     val dimens = YourMoneyTheme.dimens
 
+    var pilihDompet by remember { mutableStateOf(false) }
+    // Two keyboards must never be on screen at once. When a note is being typed
+    // the system IME owns the bottom of the screen, so the keypad steps aside.
+    val mengetik = WindowInsets.isImeVisible
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .verticalScroll(rememberScrollState())
-            // Without this the keyboard covers the note field on some OEM skins
-            // — the cost §6.8 says to budget for rather than discover.
-            .imePadding()
-            .padding(horizontal = dimens.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(dimens.gapS),
+            .imePadding(),
     ) {
-        Spacer(Modifier.height(dimens.gapL))
-        Text("Catat tunai", style = type.screenTitle, color = colors.textPrimary)
-
-        Text(
-            state.nominalDisplay,
-            style = type.displayMoney,
-            color = if (state.nominalText.isEmpty()) colors.textMuted else colors.textPrimary,
-            modifier = Modifier.padding(vertical = dimens.gapM),
-        )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(dimens.gapS)) {
-            JenisChip("Keluar", state.jenis == Jenis.KELUAR) { onJenis(Jenis.KELUAR) }
-            JenisChip("Masuk", state.jenis == Jenis.MASUK) { onJenis(Jenis.MASUK) }
-        }
-
-        SectionHeader("Dompet")
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(dimens.gapS),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            for (wallet in state.wallets) {
-                JenisChip(
-                    label = wallet.nama,
-                    selected = wallet.id == state.walletId,
-                    modifier = Modifier.weight(1f),
-                ) { onWallet(wallet.id) }
-            }
-        }
-
-        SectionHeader("Rincian")
         Column(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .background(colors.card, YourMoneyTheme.shapes.card)
-                .border(dimens.hairline, colors.border, YourMoneyTheme.shapes.card)
-                .padding(horizontal = dimens.cardPadding),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = dimens.screenPadding),
         ) {
-            FieldRow(
-                label = "Keterangan",
-                value = state.keterangan,
-                placeholder = "Tunai",
-                onValueChange = onKeterangan,
+            Spacer(Modifier.height(dimens.gapM))
+            ScreenHeader(
+                title = "Catat tunai",
+                action = { TextAction("Batal", onBatal) },
             )
-            Divider()
-            // The third row (§6.8). A note is unstructured and optional — it is
-            // the ledger's only "what for" signal, and deliberately not a category.
-            FieldRow(
-                label = "Catatan",
-                value = state.catatan,
-                placeholder = "opsional",
-                onValueChange = onCatatan,
+
+            Text(
+                state.nominalDisplay,
+                style = type.displayMoney,
+                color = if (state.nominalText.isEmpty()) colors.textMuted else colors.textPrimary,
+                modifier = Modifier.padding(top = dimens.gapM, bottom = dimens.gapM),
             )
-            Divider()
-            ReadOnlyRow(label = "Waktu", value = state.waktu)
+
+            SegmentedControl(
+                options = listOf("Keluar", "Masuk"),
+                selectedIndex = if (state.jenis == Jenis.MASUK) 1 else 0,
+                onSelect = { onJenis(if (it == 1) Jenis.MASUK else Jenis.KELUAR) },
+            )
+
+            Spacer(Modifier.height(dimens.gapM))
+
+            CardGroup {
+                TapRow(
+                    label = "Dompet",
+                    value = state.wallets.firstOrNull { it.id == state.walletId }?.nama ?: "—",
+                    onClick = { pilihDompet = true },
+                )
+                RowDivider()
+                FieldRow(
+                    label = "Keterangan",
+                    value = state.keterangan,
+                    placeholder = "Tunai",
+                    onValueChange = onKeterangan,
+                )
+                RowDivider()
+                // The third row §6.8 asks for. Unstructured and optional — the
+                // ledger's only "what for" signal, and not a category.
+                FieldRow(
+                    label = "Catatan",
+                    value = state.catatan,
+                    placeholder = "opsional",
+                    onValueChange = onCatatan,
+                )
+                RowDivider()
+                ReadOnlyRow(label = "Waktu", value = state.waktu)
+            }
+
+            Spacer(Modifier.height(dimens.gapM))
         }
 
-        Spacer(Modifier.height(dimens.gapM))
-        Keypad(onDigit = onDigit, onTripleZero = onTripleZero, onBackspace = onBackspace)
+        if (!mengetik) {
+            Keypad(
+                onDigit = onDigit,
+                onTripleZero = onTripleZero,
+                onBackspace = onBackspace,
+                modifier = Modifier.padding(horizontal = dimens.screenPadding),
+            )
+        }
 
-        Spacer(Modifier.height(dimens.gapM))
-        PrimaryButton(
-            text = if (state.menyimpan) "Menyimpan…" else "Simpan",
-            onClick = onSimpan,
-            enabled = state.bisaSimpan,
+        BottomActionBar {
+            PrimaryButton(
+                text = if (state.menyimpan) "Menyimpan…" else "Simpan",
+                onClick = onSimpan,
+                enabled = state.bisaSimpan,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    if (pilihDompet) {
+        WalletPicker(
+            wallets = state.wallets,
+            selectedId = state.walletId,
+            onPick = {
+                onWallet(it)
+                pilihDompet = false
+            },
+            onDismiss = { pilihDompet = false },
         )
-        SecondaryButton(text = "Batal", onClick = onBatal)
-        Spacer(Modifier.height(dimens.gapXl))
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun JenisChip(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
+private fun WalletPicker(
+    wallets: List<WalletChoice>,
+    selectedId: String?,
+    onPick: (String) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val colors = YourMoneyTheme.colors
-    val shape = YourMoneyTheme.shapes.chip
+    val dimens = YourMoneyTheme.dimens
 
-    Text(
-        text = label,
-        style = YourMoneyTheme.typography.label,
-        color = if (selected) colors.accentLimeInk else colors.textSecondary,
-        textAlign = TextAlign.Center,
-        maxLines = 1,
-        modifier = modifier
-            .height(YourMoneyTheme.dimens.touchTarget)
-            .background(if (selected) colors.accentLime else colors.card, shape)
-            .border(
-                YourMoneyTheme.dimens.hairline,
-                if (selected) colors.accentLime else colors.border,
-                shape,
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = YourMoneyTheme.shapes.sheet,
+    ) {
+        Column(Modifier.padding(horizontal = dimens.screenPadding)) {
+            Text(
+                "Dompet",
+                style = YourMoneyTheme.typography.screenTitle,
+                color = colors.textPrimary,
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = YourMoneyTheme.dimens.gapS)
-            .wrapContentHeight(Alignment.CenterVertically),
-    )
+            Spacer(Modifier.height(dimens.gapM))
+            wallets.forEach { wallet ->
+                val selected = wallet.id == selectedId
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp)
+                        .clickable { onPick(wallet.id) },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        wallet.nama,
+                        style = YourMoneyTheme.typography.rowTitle,
+                        color = if (selected) colors.accentLime else colors.textPrimary,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (selected) {
+                        Text(
+                            "dipakai",
+                            style = YourMoneyTheme.typography.caption,
+                            color = colors.accentLime,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(dimens.gapXl))
+        }
+    }
+}
+
+/** Label left, current value right, opens something on tap. */
+@Composable
+private fun TapRow(label: String, value: String, onClick: () -> Unit) {
+    val colors = YourMoneyTheme.colors
+    val type = YourMoneyTheme.typography
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = type.label, color = colors.textSecondary)
+        Spacer(Modifier.weight(1f))
+        Text(value, style = type.body, color = colors.textPrimary)
+        Spacer(Modifier.width(YourMoneyTheme.dimens.gapS))
+        Text("›", style = type.body, color = colors.textSecondary)
+    }
 }
 
 /**
- * Label left, value right, same pattern for every row. An empty value renders as
- * faint placeholder text rather than a filled value, so an unused note never
- * looks like data (§6.8).
+ * An empty value renders as faint placeholder text rather than a filled value, so
+ * an unused note never looks like data (§6.8).
  */
 @Composable
 private fun FieldRow(
@@ -186,7 +276,7 @@ private fun FieldRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(YourMoneyTheme.dimens.touchTarget),
+            .heightIn(min = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)
@@ -201,11 +291,12 @@ private fun FieldRow(
             decorationBox = { inner ->
                 if (value.isEmpty()) {
                     Text(
-                        buildAnnotatedString {
-                            withStyle(SpanStyle(color = colors.textMuted)) { append(placeholder) }
-                        },
+                        placeholder,
                         style = type.body,
+                        color = colors.textMuted,
                         textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -217,9 +308,9 @@ private fun FieldRow(
 }
 
 /**
- * The time being recorded, shown but not editable. It states what will actually
- * be saved rather than implying an editing surface that does not exist yet —
- * back-dating belongs with corrections, not with entry.
+ * The time being recorded, shown but not editable. It states what will actually be
+ * saved rather than implying an editing surface that does not exist — back-dating
+ * belongs with corrections, not with entry.
  */
 @Composable
 private fun ReadOnlyRow(label: String, value: String) {
@@ -229,21 +320,11 @@ private fun ReadOnlyRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(YourMoneyTheme.dimens.touchTarget),
+            .heightIn(min = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)
         Spacer(Modifier.weight(1f))
         Text(value, style = type.body, color = colors.textSecondary)
     }
-}
-
-@Composable
-private fun Divider() {
-    Spacer(
-        Modifier
-            .fillMaxWidth()
-            .height(YourMoneyTheme.dimens.hairline)
-            .background(YourMoneyTheme.colors.border),
-    )
 }
