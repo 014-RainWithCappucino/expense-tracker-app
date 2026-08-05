@@ -8,7 +8,23 @@ package com.nijika21.yourmoney.domain.money
  */
 object Rupiah {
 
-    /** `45000` → `"45.000"`. Negative input keeps its sign: `"-45.000"`. */
+    /**
+     * U+2212 MINUS SIGN, not the ASCII hyphen (§4). The hyphen is narrower than
+     * a digit even in a `tnum` face, so a column of negatives sits a hair off
+     * the ones above it — which is exactly what the design's tabular figures
+     * exist to prevent.
+     */
+    const val MINUS: Char = '−'
+
+    /** Marks a *predicted* balance. Honest by construction: balance is derived. */
+    const val APPROX: Char = '≈'
+
+    /**
+     * `45000` → `"45.000"`. Digits and separators only; a negative keeps the
+     * ASCII `-` here because this is also the CSV/backup shape (§9), where a
+     * typographic minus would be a parsing hazard on the laptop. Display code
+     * goes through [format], [signed] or [approx] instead.
+     */
     fun grouped(amount: Long): String {
         val negative = amount < 0
         // Guard Long.MIN_VALUE, where -amount overflows back to itself.
@@ -27,16 +43,28 @@ object Rupiah {
         return out.toString()
     }
 
-    /** `45000` → `"Rp45.000"`. */
-    fun format(amount: Long): String = "Rp" + grouped(amount)
+    /** `45000` → `"Rp45.000"`, `-45000` → `"−Rp45.000"`. */
+    fun format(amount: Long): String =
+        if (amount < 0) MINUS + "Rp" + magnitude(amount) else "Rp" + grouped(amount)
 
     /**
-     * `45000` → `"+Rp45.000"` / `"-Rp45.000"`. Used only where the sign is the
+     * `45000` → `"+Rp45.000"` / `"−Rp45.000"`. Used only where the sign is the
      * point (reconcile drift); ledger rows carry direction in `jenis` instead.
      */
     fun signed(amount: Long): String = when {
-        amount > 0 -> "+" + format(amount)
-        amount < 0 -> "-" + format(-amount)
+        amount > 0 -> "+Rp" + grouped(amount)
+        amount < 0 -> MINUS + "Rp" + magnitude(amount)
         else -> format(0)
     }
+
+    /**
+     * `45000` → `"≈Rp45.000"`. Every wallet balance in the app is a prediction
+     * derived from captured notifications (§6.3), so it is shown with the
+     * approximation mark until a reconcile confirms it. Dropping the mark would
+     * claim a certainty the ledger does not have.
+     */
+    fun approx(amount: Long): String = APPROX + format(amount)
+
+    /** Digits of `|amount|`, overflow-safe at [Long.MIN_VALUE]. */
+    private fun magnitude(amount: Long): String = grouped(amount).removePrefix("-")
 }
