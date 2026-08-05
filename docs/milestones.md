@@ -12,8 +12,9 @@ A milestone is **done only when it runs on the device** — compiling is not don
   - [x] Diagnostics screen with discovery leaderboard
   - [x] `assembleDebug` green, APK produced
   - [x] Runs on the Infinix (Android 15, API 35). DB encrypted, listener bound, leaderboard proven with a synthetic notification
-  - [>] Seed discovery from notifications already posted at connect time
+  - [>] Collect real BCA / GoPay / OVO notifications — needs the phone connected and time
   - [ ] Read real package names off the leaderboard, fix `SourceRegistry`, flip `verified`
+- [ ] Icon fix — density rasters committed, still shows the stock robot, unverified on device
 - [ ] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
 - [ ] M3 — Parsers against the real corpus, dedup, transfer matcher, admin-fee split
 - [ ] M4 — Reminder engine: alarms, FGS, vibration, ongoing notification, blacklist, queue
