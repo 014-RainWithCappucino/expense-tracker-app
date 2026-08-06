@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,9 @@ fun CardGroup(
             .fillMaxWidth()
             .background(colors.card, shape)
             .border(YourMoneyTheme.dimens.hairline, colors.border, shape)
+            // Rows inside press full-bleed, so without this the first and last
+            // row's press wash overruns the card's rounded corners.
+            .clip(shape)
             .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
         content = content,
     )
@@ -112,11 +116,15 @@ fun PrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
-            .background(
-                if (enabled) colors.accentLime else colors.cardElevated,
-                YourMoneyTheme.shapes.button,
-            )
-            .pressable(enabled = enabled, onClick = onClick),
+            // Ink, not lime: the fill is already lime, so the press has to read as
+            // a darkening or it reads as nothing at all.
+            .pressable(
+                enabled = enabled,
+                shape = YourMoneyTheme.shapes.button,
+                fill = if (enabled) colors.accentLime else colors.cardElevated,
+                press = colors.accentLimeInk,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -142,9 +150,12 @@ fun SecondaryButton(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
-            .background(colors.card, shape)
-            .border(YourMoneyTheme.dimens.hairline, colors.borderStrong, shape)
-            .pressable(onClick = onClick),
+            .pressable(
+                shape = shape,
+                fill = colors.card,
+                border = colors.borderStrong,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = YourMoneyTheme.typography.button, color = colors.textPrimary)
@@ -164,8 +175,12 @@ fun DangerButton(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
-            .background(colors.danger, YourMoneyTheme.shapes.button)
-            .pressable(onClick = onClick),
+            .pressable(
+                shape = YourMoneyTheme.shapes.button,
+                fill = colors.danger,
+                press = colors.accentLimeInk,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -190,7 +205,9 @@ fun TextAction(
         color = YourMoneyTheme.colors.textSecondary,
         modifier = modifier
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
-            .pressable(onClick = onClick)
+            // No background of its own, so the wash *is* the affordance — it needs
+            // a rounded shape or it flashes as a bare rectangle behind the label.
+            .pressable(shape = YourMoneyTheme.shapes.cardSmall, onClick = onClick)
             .padding(
                 horizontal = YourMoneyTheme.dimens.gapS,
                 vertical = YourMoneyTheme.dimens.gapM,
@@ -243,8 +260,13 @@ fun SegmentedControl(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 44.dp)
-                    .background(fill, YourMoneyTheme.shapes.cardSmall)
-                    .pressable { onSelect(index) },
+                    .pressable(
+                        shape = YourMoneyTheme.shapes.cardSmall,
+                        fill = fill,
+                        // The selected side is lime, the other is the dark track,
+                        // so the two halves need opposite press colours.
+                        press = if (selected) colors.accentLimeInk else colors.accentLime,
+                    ) { onSelect(index) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
