@@ -92,7 +92,13 @@ class SourceRegistryTest {
 
     @Test
     fun `packages never seen on the device are not claimed as verified`() {
-        val unproven = listOf("com.bca.mybca.omni.android", "com.gojek.app", "ovo.id")
+        val unproven = listOf(
+            "com.bca.mybca.omni.android",
+            "com.gojek.app",
+            "ovo.id",
+            "com.shopeepay.id",
+            "com.shopee.id",
+        )
         for (pkg in unproven) {
             val candidate = SourceRegistry.candidates.first { it.packageName == pkg }
             assertFalse(

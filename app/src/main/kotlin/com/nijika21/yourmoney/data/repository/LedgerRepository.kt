@@ -176,12 +176,23 @@ class LedgerRepository @Inject constructor(
                 packageHint = "ovo.id",
             ),
             Wallet(
+                id = "shopeepay",
+                nama = "ShopeePay",
+                jenis = WalletJenis.EWALLET,
+                terhubung = true,
+                saldoAwal = 0,
+                urutan = 3,
+                // The standalone app. `com.shopee.id` is whitelisted too, but a
+                // wallet carries one hint and this is the one that owns the money.
+                packageHint = "com.shopeepay.id",
+            ),
+            Wallet(
                 id = "tunai",
                 nama = "Tunai",
                 jenis = WalletJenis.CASH,
                 terhubung = false,
                 saldoAwal = 0,
-                urutan = 3,
+                urutan = 4,
                 packageHint = null,
             ),
         )

@@ -43,6 +43,11 @@ object SourceRegistry {
                 "filtering, receipts and ads share it.",
         ),
         Candidate("ovo.id", "OVO"),
+        // Both, because the receipt can come from either: the standalone wallet
+        // app or the Shopee app it is embedded in. An entry that never fires
+        // costs nothing; the missing one is what loses transactions.
+        Candidate("com.shopeepay.id", "ShopeePay"),
+        Candidate("com.shopee.id", "Shopee (ShopeePay)"),
     )
 
     private val packages: Set<String> = candidates.mapTo(mutableSetOf()) { it.packageName }
