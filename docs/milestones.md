@@ -16,15 +16,19 @@ A milestone is **done only when it runs on the device** — compiling is not don
   - [x] `com.bca` and `com.gojek.gopay` verified on hardware. myBCA / Gojek / OVO are installed but have not fired yet
   - [x] `TransactionSignal` separates receipts from marketing without discarding anything
 - [x] Icon fix — verified on the launcher. The resource was always correct; XOS was serving a stale cached icon
-- [>] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
+- [x] M2 — Ledger domain + property tests, Home (01), Catat cash (02) incl. note field, transaction detail sheet
   - [x] `BalanceCalculator`, `PeriodTotals`, `DayWindow` + the §11 property tests
   - [x] Wallet seed, `LedgerRepository`, day-window query
   - [x] Home (01) — today's spend, wallet balances, today's rows, nav graph
   - [x] Catat cash (02) — keypad, jenis, wallet, the three-row field group incl. note
   - [x] Transaction detail sheet — note commits on dismiss, delete confirms
-  - [>] **Verify all three on the unlocked phone.** They install and cold-start
-    without crashing (activity reaches Resumed), but nobody has seen them yet —
-    the device locked before there was anything to look at
+  - [x] Tappable caret in the amount, so fixing a typo costs one tap, not the whole number
+  - [x] `RupiahOffsets` covered — 9 tests, bound to `Rupiah.grouped` rather than restating it
+  - [x] **Seen on the phone 2026-08-06.** Home renders; the caret deletes the digit
+    it sits on across a thousands separator; the press wash clips to the button edge;
+    backspace hold-repeat stops on release. Detail sheet driven end to end: note
+    committed on dismiss, survived reopen, stamped `pernah diubah`, delete confirmed
+    and the row left the hero, the wallet total and the list
 - [ ] M3 — Parsers against the real corpus, dedup, transfer matcher, admin-fee split
 - [ ] M4 — Reminder engine: alarms, FGS, vibration, ongoing notification, blacklist, queue
 - [ ] M5 — Reconcile wizard (06), Dompet (07)
