@@ -7,6 +7,7 @@ import com.nijika21.yourmoney.data.repository.LedgerRepository
 import com.nijika21.yourmoney.domain.model.Jenis
 import com.nijika21.yourmoney.domain.model.Sumber
 import com.nijika21.yourmoney.domain.time.TimeProvider
+import com.nijika21.yourmoney.ui.format.displayKeterangan
 import com.nijika21.yourmoney.ui.format.formatDateTime
 import com.nijika21.yourmoney.ui.format.formatRowAmount
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -75,7 +76,7 @@ class TransactionSheetViewModel @Inject constructor(
 
         TransactionSheetState(
             id = tx.id,
-            keterangan = tx.keterangan,
+            keterangan = displayKeterangan(tx.keterangan, tx.jenis),
             amount = formatRowAmount(tx.jenis, tx.nominal),
             jenis = tx.jenis,
             walletNama = namaOf(tx.walletId) ?: tx.walletId,

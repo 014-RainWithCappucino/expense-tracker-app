@@ -149,6 +149,32 @@ fun SecondaryButton(
     }
 }
 
+/** Confirms something destructive. Never the lime button — that one means "save". */
+@Composable
+fun DangerButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = YourMoneyTheme.colors
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = YourMoneyTheme.dimens.touchTarget)
+            .background(colors.danger, YourMoneyTheme.shapes.button)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text,
+            style = YourMoneyTheme.typography.button,
+            // The danger red is light, so it takes dark ink like the lime does.
+            color = colors.accentLimeInk,
+        )
+    }
+}
+
 /** Low-weight text action. For things that must be reachable but not prominent. */
 @Composable
 fun TextAction(

@@ -156,8 +156,10 @@ class CatatViewModel @Inject constructor(
                     nominal = amount,
                     walletId = walletId,
                     // An empty label is normal — most cash spending has no name
-                    // worth typing. "Tunai" is the honest fallback, not a guess.
-                    keterangan = state.keterangan.trim().ifEmpty { "Tunai" },
+                    // worth typing — and it is stored empty rather than filled
+                    // with "Tunai", which only repeated the wallet name back in
+                    // the row. The list supplies a title at display time.
+                    keterangan = state.keterangan.trim(),
                     catatan = state.catatan,
                 )
             }.onSuccess {

@@ -41,3 +41,21 @@ fun formatRowAmount(jenis: Jenis, nominal: Long): String = when (jenis) {
     Jenis.PINDAH_DOMPET -> Rupiah.format(nominal)
     else -> Rupiah.signed(jenis.effectOnSource(nominal))
 }
+
+/**
+ * What a row is titled when the user typed no label.
+ *
+ * Defaulting the stored `keterangan` to "Tunai" produced rows reading
+ * *"Tunai / Tunai · 06:34"* — the wallet name twice, once as the title and once
+ * as the meta. So nothing is stored, and the title falls back to the direction,
+ * which is the only thing actually known about an unlabelled entry.
+ */
+fun displayKeterangan(keterangan: String, jenis: Jenis): String =
+    keterangan.ifBlank {
+        when (jenis) {
+            Jenis.MASUK -> "Uang masuk"
+            Jenis.KELUAR -> "Pengeluaran"
+            Jenis.PINDAH_DOMPET -> "Pindah dompet"
+            Jenis.KOREKSI_NAIK, Jenis.KOREKSI_TURUN -> "Koreksi saldo"
+        }
+    }

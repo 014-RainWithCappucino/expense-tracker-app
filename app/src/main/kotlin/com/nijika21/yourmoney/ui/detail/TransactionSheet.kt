@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -27,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.nijika21.yourmoney.ui.components.PrimaryButton
+import com.nijika21.yourmoney.ui.components.DangerButton
 import com.nijika21.yourmoney.ui.components.SecondaryButton
 import com.nijika21.yourmoney.ui.components.jenisColor
 import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
@@ -49,7 +51,12 @@ fun TransactionSheetHost(
 ) {
     if (!state.terbuka) return
 
-    val sheetState = rememberModalBottomSheetState()
+    // Two problems on the device, both fixed here rather than in the content:
+    // the half-height sheet left the delete confirmation clipped at the screen
+    // edge until it was dragged up by hand, and the system keyboard covered the
+    // note field — the exact hazard §6.8 warns to budget for. Full height plus a
+    // scrollable body means the field can always be brought above the keyboard.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -81,6 +88,7 @@ fun TransactionDetail(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = dimens.screenPadding)
             // A text field inside a sheet needs both, or the keyboard covers it.
             .imePadding()
@@ -144,7 +152,10 @@ fun TransactionDetail(
             )
             Spacer(Modifier.height(dimens.gapS))
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.gapM)) {
-                PrimaryButton(
+                // Not the lime button. Lime is the affirmative accent used for
+                // saving; wearing it here would make deleting look like the
+                // agreeable choice.
+                DangerButton(
                     text = "Ya, hapus",
                     onClick = onHapus,
                     modifier = Modifier.weight(1f),

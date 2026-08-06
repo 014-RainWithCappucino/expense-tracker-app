@@ -135,7 +135,9 @@ fun CatatScreen(
                 FieldRow(
                     label = "Keterangan",
                     value = state.keterangan,
-                    placeholder = "Tunai",
+                    // A hint, not a default. "Tunai" here just echoed the wallet
+                    // name and taught nothing about what the field is for.
+                    placeholder = "kopi, parkir, …",
                     onValueChange = onKeterangan,
                 )
                 RowDivider()

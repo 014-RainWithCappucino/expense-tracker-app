@@ -114,7 +114,11 @@ fun HomeScreen(
                         Column(Modifier.weight(1f)) {
                             Text("Total", style = type.label, color = colors.textSecondary)
                             Text(
-                                "perkiraan, belum dicocokkan",
+                                if (state.saldoAwalKosong) {
+                                    "saldo awal belum diisi"
+                                } else {
+                                    "perkiraan, belum dicocokkan"
+                                },
                                 style = type.caption,
                                 color = colors.textSecondary,
                             )

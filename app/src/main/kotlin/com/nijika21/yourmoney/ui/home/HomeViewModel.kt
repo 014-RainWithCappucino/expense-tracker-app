@@ -10,6 +10,7 @@ import com.nijika21.yourmoney.domain.time.TimeProvider
 import com.nijika21.yourmoney.domain.time.dayWindow
 import com.nijika21.yourmoney.ui.components.TxRowUi
 import com.nijika21.yourmoney.ui.components.WalletRowUi
+import com.nijika21.yourmoney.ui.format.displayKeterangan
 import com.nijika21.yourmoney.ui.format.formatClock
 import com.nijika21.yourmoney.ui.format.formatDay
 import com.nijika21.yourmoney.ui.format.formatRowAmount
@@ -35,6 +36,12 @@ data class HomeUiState(
     val koreksiHariIni: String? = null,
     val wallets: List<WalletRowUi> = emptyList(),
     val totalSaldo: String = Rupiah.approx(0),
+    /**
+     * Every wallet still opens at zero, so the total is only the sum of what has
+     * been recorded since install — which goes negative on the first expense and
+     * looks alarming until you know why. The caption says why.
+     */
+    val saldoAwalKosong: Boolean = false,
     val transaksiHariIni: List<TxRowUi> = emptyList(),
     val loading: Boolean = true,
 ) {
@@ -84,13 +91,14 @@ class HomeViewModel @Inject constructor(
                 )
             },
             totalSaldo = Rupiah.approx(wallets.sumOf { it.saldo }),
+            saldoAwalKosong = wallets.isNotEmpty() && wallets.all { it.wallet.saldoAwal == 0L },
             transaksiHariIni = transaksi.map { tx ->
                 val walletName = wallets.firstOrNull { it.wallet.id == tx.walletId }
                     ?.wallet?.nama
                     ?: tx.walletId
                 TxRowUi(
                     id = tx.id,
-                    keterangan = tx.keterangan,
+                    keterangan = displayKeterangan(tx.keterangan, tx.jenis),
                     walletAndTime = "$walletName · ${formatClock(tx.waktu, zone)}",
                     catatan = tx.catatan,
                     amount = formatRowAmount(tx.jenis, tx.nominal),
