@@ -94,9 +94,10 @@ fun YourMoneyNavGraph(
 
             CatatScreen(
                 state = state,
-                onDigit = viewModel::appendDigit,
-                onTripleZero = viewModel::appendTripleZero,
+                onDigit = viewModel::insertDigit,
+                onTripleZero = viewModel::insertTripleZero,
                 onBackspace = viewModel::backspace,
+                onCursor = viewModel::setCursor,
                 onJenis = viewModel::setJenis,
                 onKeterangan = viewModel::setKeterangan,
                 onCatatan = viewModel::setCatatan,

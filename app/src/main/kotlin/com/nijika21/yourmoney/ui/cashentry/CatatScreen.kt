@@ -1,7 +1,6 @@
 package com.nijika21.yourmoney.ui.cashentry
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nijika21.yourmoney.domain.model.Jenis
+import com.nijika21.yourmoney.ui.components.AmountField
 import com.nijika21.yourmoney.ui.components.BottomActionBar
 import com.nijika21.yourmoney.ui.components.CardGroup
 import com.nijika21.yourmoney.ui.components.Keypad
@@ -43,6 +43,7 @@ import com.nijika21.yourmoney.ui.components.RowDivider
 import com.nijika21.yourmoney.ui.components.ScreenHeader
 import com.nijika21.yourmoney.ui.components.SegmentedControl
 import com.nijika21.yourmoney.ui.components.TextAction
+import com.nijika21.yourmoney.ui.components.pressable
 import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
 
 /**
@@ -74,6 +75,7 @@ fun CatatScreen(
     onDigit: (Char) -> Unit,
     onTripleZero: () -> Unit,
     onBackspace: () -> Unit,
+    onCursor: (Int) -> Unit,
     onJenis: (Jenis) -> Unit,
     onKeterangan: (String) -> Unit,
     onCatatan: (String) -> Unit,
@@ -110,10 +112,10 @@ fun CatatScreen(
                 action = { TextAction("Batal", onBatal) },
             )
 
-            Text(
-                state.nominalDisplay,
-                style = type.displayMoney,
-                color = if (state.nominalText.isEmpty()) colors.textMuted else colors.textPrimary,
+            AmountField(
+                digits = state.nominalText,
+                cursor = state.cursor,
+                onCursor = onCursor,
                 modifier = Modifier.padding(top = dimens.gapM, bottom = dimens.gapM),
             )
 
@@ -217,7 +219,7 @@ private fun WalletPicker(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .clickable { onPick(wallet.id) },
+                        .pressable { onPick(wallet.id) },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -250,7 +252,7 @@ private fun TapRow(label: String, value: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clickable(onClick = onClick),
+            .pressable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)

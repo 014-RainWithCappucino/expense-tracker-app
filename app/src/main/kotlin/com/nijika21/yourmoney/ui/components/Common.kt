@@ -1,8 +1,9 @@
 package com.nijika21.yourmoney.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -114,7 +116,7 @@ fun PrimaryButton(
                 if (enabled) colors.accentLime else colors.cardElevated,
                 YourMoneyTheme.shapes.button,
             )
-            .clickable(enabled = enabled, onClick = onClick),
+            .pressable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -142,7 +144,7 @@ fun SecondaryButton(
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
             .background(colors.card, shape)
             .border(YourMoneyTheme.dimens.hairline, colors.borderStrong, shape)
-            .clickable(onClick = onClick),
+            .pressable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = YourMoneyTheme.typography.button, color = colors.textPrimary)
@@ -163,7 +165,7 @@ fun DangerButton(
             .fillMaxWidth()
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
             .background(colors.danger, YourMoneyTheme.shapes.button)
-            .clickable(onClick = onClick),
+            .pressable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -188,7 +190,7 @@ fun TextAction(
         color = YourMoneyTheme.colors.textSecondary,
         modifier = modifier
             .heightIn(min = YourMoneyTheme.dimens.touchTarget)
-            .clickable(onClick = onClick)
+            .pressable(onClick = onClick)
             .padding(
                 horizontal = YourMoneyTheme.dimens.gapS,
                 vertical = YourMoneyTheme.dimens.gapM,
@@ -224,21 +226,31 @@ fun SegmentedControl(
     ) {
         options.forEachIndexed { index, label ->
             val selected = index == selectedIndex
+            // Crossfaded rather than snapped, so the eye can follow which side
+            // took the selection instead of just noticing the colour is elsewhere.
+            val fill by animateColorAsState(
+                targetValue = if (selected) colors.accentLime else colors.surface,
+                animationSpec = tween(durationMillis = 180),
+                label = "segmentFill",
+            )
+            val ink by animateColorAsState(
+                targetValue = if (selected) colors.accentLimeInk else colors.textSecondary,
+                animationSpec = tween(durationMillis = 180),
+                label = "segmentInk",
+            )
+
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 44.dp)
-                    .background(
-                        if (selected) colors.accentLime else colors.surface,
-                        YourMoneyTheme.shapes.cardSmall,
-                    )
-                    .clickable { onSelect(index) },
+                    .background(fill, YourMoneyTheme.shapes.cardSmall)
+                    .pressable { onSelect(index) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     label,
                     style = YourMoneyTheme.typography.button,
-                    color = if (selected) colors.accentLimeInk else colors.textSecondary,
+                    color = ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

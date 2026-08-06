@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nijika21.yourmoney.data.repository.LedgerRepository
 import com.nijika21.yourmoney.domain.model.Jenis
-import com.nijika21.yourmoney.domain.money.Rupiah
 import com.nijika21.yourmoney.domain.time.TimeProvider
 import com.nijika21.yourmoney.ui.format.formatClock
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,8 +21,10 @@ import javax.inject.Inject
 data class WalletChoice(val id: String, val nama: String)
 
 data class CatatUiState(
+    /** Raw digits. The `Rp` and the dots are a visual layer over this. */
     val nominalText: String = "",
-    val nominalDisplay: String = Rupiah.format(0),
+    /** Caret position within [nominalText], so a mistyped digit can be picked out. */
+    val cursor: Int = 0,
     val jenis: Jenis = Jenis.KELUAR,
     val keterangan: String = "",
     val catatan: String = "",
@@ -53,6 +54,7 @@ class CatatViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val nominal = savedState.getStateFlow(KEY_NOMINAL, "")
+    private val cursor = savedState.getStateFlow(KEY_CURSOR, 0)
     private val jenis = savedState.getStateFlow(KEY_JENIS, Jenis.KELUAR.name)
     private val keterangan = savedState.getStateFlow(KEY_KETERANGAN, "")
     private val catatan = savedState.getStateFlow(KEY_CATATAN, "")
@@ -64,18 +66,30 @@ class CatatViewModel @Inject constructor(
     /** One-shot, so a save navigates exactly once and not again on recomposition. */
     val saved: Flow<Unit> = tersimpan.receiveAsFlow()
 
-    /** The form, as one value. Six separate flows would not fit `combine`. */
+    /** The form, as one value. The separate flows would not fit `combine`. */
     private data class Draft(
         val nominal: String,
+        val cursor: Int,
         val jenis: String,
         val keterangan: String,
         val catatan: String,
         val walletId: String?,
     )
 
+    /** Amount and caret move together, so they collapse into one flow first. */
+    private val amount: Flow<Pair<String, Int>> =
+        combine(nominal, cursor) { text, at -> text to at.coerceIn(0, text.length) }
+
     private val draft: Flow<Draft> =
-        combine(nominal, jenis, keterangan, catatan, walletId) { n, j, k, c, w ->
-            Draft(nominal = n, jenis = j, keterangan = k, catatan = c, walletId = w)
+        combine(amount, jenis, keterangan, catatan, walletId) { a, j, k, c, w ->
+            Draft(
+                nominal = a.first,
+                cursor = a.second,
+                jenis = j,
+                keterangan = k,
+                catatan = c,
+                walletId = w,
+            )
         }
 
     val uiState: StateFlow<CatatUiState> = combine(
@@ -83,11 +97,9 @@ class CatatViewModel @Inject constructor(
         draft,
         menyimpan,
     ) { wallets, form, saving ->
-        val amount = form.nominal.toLongOrNull() ?: 0L
-
         CatatUiState(
             nominalText = form.nominal,
-            nominalDisplay = Rupiah.format(amount),
+            cursor = form.cursor,
             jenis = Jenis.valueOf(form.jenis),
             keterangan = form.keterangan,
             catatan = form.catatan,
@@ -107,24 +119,50 @@ class CatatViewModel @Inject constructor(
         initialValue = CatatUiState(),
     )
 
-    fun appendDigit(digit: Char) {
+    /**
+     * All three edits act at the caret, not at the end of the string. Typing
+     * `205000` when you meant `25000` should cost one tap and one backspace, not
+     * a full retype — which is what an append-only keypad forced.
+     */
+    fun insertDigit(digit: Char) {
         val current = nominal.value
         // 12 digits is a hundred billion rupiah. Past that it is a typo, and the
         // cap keeps the display from overflowing its line.
-        if (current.length >= 12) return
-        if (current.isEmpty() && digit == '0') return
-        savedState[KEY_NOMINAL] = current + digit
+        if (current.length >= MAX_DIGITS) return
+        // A leading zero is never meaningful in an amount, and allowing one makes
+        // "0" and "" two states that look identical.
+        if (cursor.value == 0 && digit == '0') return
+        insert(digit.toString())
     }
 
-    fun appendTripleZero() {
+    fun insertTripleZero() {
         val current = nominal.value
-        if (current.isEmpty() || current.length > 9) return
-        savedState[KEY_NOMINAL] = current + "000"
+        if (current.isEmpty()) return
+        if (current.length + 3 > MAX_DIGITS) return
+        insert("000")
     }
 
     fun backspace() {
-        savedState[KEY_NOMINAL] = nominal.value.dropLast(1)
+        val current = nominal.value
+        val at = caret(current)
+        if (at == 0) return
+        savedState[KEY_NOMINAL] = current.removeRange(at - 1, at)
+        savedState[KEY_CURSOR] = at - 1
     }
+
+    /** Where the user tapped. Clamped, because the field's length changes under it. */
+    fun setCursor(index: Int) {
+        savedState[KEY_CURSOR] = index.coerceIn(0, nominal.value.length)
+    }
+
+    private fun insert(digits: String) {
+        val current = nominal.value
+        val at = caret(current)
+        savedState[KEY_NOMINAL] = current.substring(0, at) + digits + current.substring(at)
+        savedState[KEY_CURSOR] = at + digits.length
+    }
+
+    private fun caret(current: String): Int = cursor.value.coerceIn(0, current.length)
 
     fun setJenis(value: Jenis) {
         savedState[KEY_JENIS] = value.name
@@ -171,7 +209,9 @@ class CatatViewModel @Inject constructor(
     }
 
     private companion object {
+        const val MAX_DIGITS = 12
         const val KEY_NOMINAL = "nominal"
+        const val KEY_CURSOR = "cursor"
         const val KEY_JENIS = "jenis"
         const val KEY_KETERANGAN = "keterangan"
         const val KEY_CATATAN = "catatan"

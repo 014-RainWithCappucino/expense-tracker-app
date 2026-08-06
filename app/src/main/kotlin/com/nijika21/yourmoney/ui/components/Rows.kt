@@ -1,6 +1,5 @@
 package com.nijika21.yourmoney.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -63,7 +62,7 @@ fun TxRow(row: TxRowUi, onClick: (String) -> Unit, modifier: Modifier = Modifier
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .clickable { onClick(row.id) }
+            .pressable { onClick(row.id) }
             .padding(vertical = dimens.gapM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
