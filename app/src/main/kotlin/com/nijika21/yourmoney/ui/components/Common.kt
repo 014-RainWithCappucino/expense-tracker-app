@@ -21,6 +21,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,10 +48,11 @@ fun CardGroup(
             .fillMaxWidth()
             .background(colors.card, shape)
             .border(YourMoneyTheme.dimens.hairline, colors.border, shape)
-            // Rows inside press full-bleed, so without this the first and last
-            // row's press wash overruns the card's rounded corners.
-            .clip(shape)
-            .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
+            // Rows inside press full-bleed on all sides — horizontally too, or
+            // an interactive row's wash sits as a smaller pill inset from the
+            // card's true edges instead of reaching them. Each row pads its
+            // own content after its own pressable, not here.
+            .clip(shape),
         content = content,
     )
 }
@@ -142,9 +145,15 @@ fun SecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    // Unspecified defaults to the neutral outline every other caller wants;
+    // a destructive trigger like "Hapus transaksi" overrides both to danger red.
+    borderColor: Color = Color.Unspecified,
+    textColor: Color = Color.Unspecified,
 ) {
     val colors = YourMoneyTheme.colors
     val shape = YourMoneyTheme.shapes.button
+    val border = if (borderColor.isSpecified) borderColor else colors.borderStrong
+    val text2 = if (textColor.isSpecified) textColor else colors.textPrimary
 
     Box(
         modifier = modifier
@@ -153,12 +162,12 @@ fun SecondaryButton(
             .pressable(
                 shape = shape,
                 fill = colors.card,
-                border = colors.borderStrong,
+                border = border,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = YourMoneyTheme.typography.button, color = colors.textPrimary)
+        Text(text, style = YourMoneyTheme.typography.button, color = text2)
     }
 }
 

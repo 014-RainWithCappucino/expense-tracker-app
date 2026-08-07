@@ -8,6 +8,11 @@ import androidx.compose.ui.unit.dp
 @Immutable
 data class YourMoneyShapes(
     val card: Shape = RoundedCornerShape(20.dp),
+    // A full-bleed row at the top or bottom edge of a CardGroup needs its own
+    // matching corners — CardGroup clips to `card`, and a row's default
+    // rectangular press wash gets hard-cropped by that clip otherwise.
+    val cardTop: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+    val cardBottom: Shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
     val cardSmall: Shape = RoundedCornerShape(14.dp),
     val button: Shape = RoundedCornerShape(16.dp),
     val chip: Shape = RoundedCornerShape(999.dp),

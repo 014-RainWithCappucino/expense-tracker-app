@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -252,7 +253,11 @@ private fun TapRow(label: String, value: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .pressable(onClick = onClick),
+            // Always the first row in Catat's card group, so only the top
+            // corners need to match — never the last, never the only row.
+            // No shrink either: fixed dividers sit right below it.
+            .pressable(shape = YourMoneyTheme.shapes.cardTop, scaleDown = 1f, onClick = onClick)
+            .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)
@@ -276,11 +281,15 @@ private fun FieldRow(
 ) {
     val colors = YourMoneyTheme.colors
     val type = YourMoneyTheme.typography
+    // Same rule as the detail sheet's note field: the hint is about an empty
+    // field, not empty text, so it clears on tap rather than on first keystroke.
+    var focused by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .heightIn(min = 56.dp)
+            .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)
@@ -293,7 +302,7 @@ private fun FieldRow(
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             decorationBox = { inner ->
-                if (value.isEmpty()) {
+                if (value.isEmpty() && !focused) {
                     Text(
                         placeholder,
                         style = type.body,
@@ -306,7 +315,9 @@ private fun FieldRow(
                 }
                 inner()
             },
-            modifier = Modifier.weight(2f),
+            modifier = Modifier
+                .weight(2f)
+                .onFocusChanged { focused = it.isFocused },
         )
     }
 }
@@ -324,7 +335,8 @@ private fun ReadOnlyRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .heightIn(min = 56.dp)
+            .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = type.label, color = colors.textSecondary)

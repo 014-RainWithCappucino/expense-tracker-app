@@ -62,6 +62,7 @@ fun YourMoneyNavGraph(
 
             val sheetViewModel: TransactionSheetViewModel = hiltViewModel()
             val sheetState by sheetViewModel.state.collectAsStateWithLifecycle()
+            val catatanDraft by sheetViewModel.draft.collectAsStateWithLifecycle()
 
             HomeScreen(
                 state = state,
@@ -75,6 +76,7 @@ fun YourMoneyNavGraph(
             // scrim, so annotating one of two identical charges is unambiguous.
             TransactionSheetHost(
                 state = sheetState,
+                catatanDraft = catatanDraft,
                 onCatatan = sheetViewModel::setCatatan,
                 onDismiss = sheetViewModel::dismiss,
                 onHapus = sheetViewModel::hapus,

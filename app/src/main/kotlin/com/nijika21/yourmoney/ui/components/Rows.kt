@@ -14,6 +14,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nijika21.yourmoney.domain.model.Jenis
@@ -53,7 +55,12 @@ fun jenisColor(jenis: Jenis): Color {
  * one built before notes existed.
  */
 @Composable
-fun TxRow(row: TxRowUi, onClick: (String) -> Unit, modifier: Modifier = Modifier) {
+fun TxRow(
+    row: TxRowUi,
+    onClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = RectangleShape,
+) {
     val colors = YourMoneyTheme.colors
     val type = YourMoneyTheme.typography
     val dimens = YourMoneyTheme.dimens
@@ -62,8 +69,11 @@ fun TxRow(row: TxRowUi, onClick: (String) -> Unit, modifier: Modifier = Modifier
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .pressable { onClick(row.id) }
-            .padding(vertical = dimens.gapM),
+            // No shrink: this row sits between fixed hairline dividers, so a
+            // scale transform pulls its content away from lines that don't
+            // move with it. Wash-only feedback stays clean full-bleed.
+            .pressable(shape = shape, scaleDown = 1f) { onClick(row.id) }
+            .padding(horizontal = dimens.cardPadding, vertical = dimens.gapM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -113,7 +123,8 @@ fun WalletRow(row: WalletRowUi, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .heightIn(min = 56.dp)
+            .padding(horizontal = dimens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

@@ -30,8 +30,6 @@ data class TransactionSheetState(
     val walletNama: String = "",
     val walletTujuanNama: String? = null,
     val waktu: String = "",
-    /** Live draft, which is what the field shows — not the stored value. */
-    val catatanDraft: String = "",
     val otomatis: Boolean = false,
     val sudahDiubah: Boolean = false,
 ) {
@@ -57,7 +55,17 @@ class TransactionSheetViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val openId = savedState.getStateFlow<String?>(KEY_OPEN_ID, null)
-    private val draft = savedState.getStateFlow(KEY_DRAFT, "")
+
+    /**
+     * Live draft, which is what the field shows — not the stored value.
+     *
+     * Collected separately from [state] so the note field updates the instant
+     * [setCatatan] runs. Folding this into the [combine] below would make every
+     * keystroke wait on `transaction`/`wallets` to re-settle too, which is
+     * exactly the extra hop that made the placeholder linger over the first
+     * character typed.
+     */
+    val draft: StateFlow<String> = savedState.getStateFlow(KEY_DRAFT, "")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val transaction = openId.flatMapLatest { id ->
@@ -67,8 +75,7 @@ class TransactionSheetViewModel @Inject constructor(
     val state: StateFlow<TransactionSheetState> = combine(
         transaction,
         ledger.observeWallets(),
-        draft,
-    ) { tx, wallets, catatanDraft ->
+    ) { tx, wallets ->
         if (tx == null) return@combine TransactionSheetState()
 
         fun namaOf(walletId: String?) =
@@ -82,7 +89,6 @@ class TransactionSheetViewModel @Inject constructor(
             walletNama = namaOf(tx.walletId) ?: tx.walletId,
             walletTujuanNama = namaOf(tx.walletTujuanId),
             waktu = formatDateTime(tx.waktu, time.zone()),
-            catatanDraft = catatanDraft,
             otomatis = tx.sumber == Sumber.OTOMATIS,
             sudahDiubah = tx.editedAt != null,
         )

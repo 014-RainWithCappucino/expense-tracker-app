@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import com.nijika21.yourmoney.ui.components.BottomActionBar
 import com.nijika21.yourmoney.ui.components.CardGroup
 import com.nijika21.yourmoney.ui.components.EmptyState
@@ -108,7 +109,7 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = dimens.gapM),
+                            .padding(horizontal = dimens.cardPadding, vertical = dimens.gapM),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
@@ -151,9 +152,19 @@ fun HomeScreen(
             } else {
                 item {
                     CardGroup {
+                        val shapes = YourMoneyTheme.shapes
+                        val lastIndex = state.transaksiHariIni.lastIndex
                         state.transaksiHariIni.forEachIndexed { index, row ->
                             if (index > 0) RowDivider()
-                            TxRow(row = row, onClick = onOpenTransaction)
+                            // Only the first/last row touches CardGroup's rounded
+                            // clip; a middle row stays the default rectangle.
+                            val rowShape = when {
+                                lastIndex == 0 -> shapes.card
+                                index == 0 -> shapes.cardTop
+                                index == lastIndex -> shapes.cardBottom
+                                else -> RectangleShape
+                            }
+                            TxRow(row = row, onClick = onOpenTransaction, shape = rowShape)
                         }
                     }
                 }

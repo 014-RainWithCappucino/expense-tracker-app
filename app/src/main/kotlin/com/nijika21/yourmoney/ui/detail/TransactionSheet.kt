@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,7 @@ import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
 @Composable
 fun TransactionSheetHost(
     state: TransactionSheetState,
+    catatanDraft: String,
     onCatatan: (String) -> Unit,
     onDismiss: () -> Unit,
     onHapus: () -> Unit,
@@ -66,6 +68,7 @@ fun TransactionSheetHost(
     ) {
         TransactionDetail(
             state = state,
+            catatanDraft = catatanDraft,
             onCatatan = onCatatan,
             onHapus = onHapus,
         )
@@ -75,6 +78,7 @@ fun TransactionSheetHost(
 @Composable
 fun TransactionDetail(
     state: TransactionSheetState,
+    catatanDraft: String,
     onCatatan: (String) -> Unit,
     onHapus: () -> Unit,
     modifier: Modifier = Modifier,
@@ -84,6 +88,9 @@ fun TransactionDetail(
     val dimens = YourMoneyTheme.dimens
 
     var mintaKonfirmasi by remember { mutableStateOf(false) }
+    // The hint is about an empty field, not empty text — it should clear the
+    // moment the field is tapped, not linger until the first character lands.
+    var catatanFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -113,7 +120,7 @@ fun TransactionDetail(
         // No Simpan button by design: the note commits when the sheet closes.
         // An explicit save here creates "typed a note, swiped down, lost it".
         BasicTextField(
-            value = state.catatanDraft,
+            value = catatanDraft,
             onValueChange = onCatatan,
             textStyle = type.body.copy(color = colors.textPrimary),
             cursorBrush = SolidColor(colors.accentLime),
@@ -125,7 +132,7 @@ fun TransactionDetail(
                         .border(dimens.hairline, colors.border, YourMoneyTheme.shapes.field)
                         .padding(dimens.cardPadding),
                 ) {
-                    if (state.catatanDraft.isEmpty()) {
+                    if (catatanDraft.isEmpty() && !catatanFocused) {
                         Text(
                             "Buat apa? Opsional — tersimpan sendiri waktu ditutup.",
                             style = type.body,
@@ -137,7 +144,8 @@ fun TransactionDetail(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 72.dp),
+                .heightIn(min = 72.dp)
+                .onFocusChanged { catatanFocused = it.isFocused },
         )
 
         Spacer(Modifier.height(dimens.gapM))
@@ -167,7 +175,12 @@ fun TransactionDetail(
                 )
             }
         } else {
-            SecondaryButton(text = "Hapus transaksi", onClick = { mintaKonfirmasi = true })
+            SecondaryButton(
+                text = "Hapus transaksi",
+                onClick = { mintaKonfirmasi = true },
+                borderColor = colors.danger,
+                textColor = colors.danger,
+            )
         }
 
         Spacer(Modifier.height(dimens.gapL))
