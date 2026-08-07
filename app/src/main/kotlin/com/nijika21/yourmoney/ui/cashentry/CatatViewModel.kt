@@ -7,6 +7,7 @@ import com.nijika21.yourmoney.data.repository.LedgerRepository
 import com.nijika21.yourmoney.domain.model.Jenis
 import com.nijika21.yourmoney.domain.time.TimeProvider
 import com.nijika21.yourmoney.ui.format.formatClock
+import com.nijika21.yourmoney.ui.format.formatDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 
 data class WalletChoice(val id: String, val nama: String)
@@ -27,8 +30,12 @@ data class CatatUiState(
     val cursor: Int = 0,
     val jenis: Jenis = Jenis.KELUAR,
     val keterangan: String = "",
-    val catatan: String = "",
-    val waktu: String = "",
+    /** `null` epoch day never reaches the UI — always resolved to today by default. */
+    val tanggalEpochDay: Long = 0L,
+    val tanggalTransaksi: String = "",
+    /** Minutes since local midnight, or `null` for "whatever time it's actually saved". */
+    val waktuMenit: Int? = null,
+    val waktuDisplay: String = "",
     val wallets: List<WalletChoice> = emptyList(),
     val walletId: String? = null,
     val menyimpan: Boolean = false,
@@ -57,7 +64,13 @@ class CatatViewModel @Inject constructor(
     private val cursor = savedState.getStateFlow(KEY_CURSOR, 0)
     private val jenis = savedState.getStateFlow(KEY_JENIS, Jenis.KELUAR.name)
     private val keterangan = savedState.getStateFlow(KEY_KETERANGAN, "")
-    private val catatan = savedState.getStateFlow(KEY_CATATAN, "")
+    // Absent until touched, so an untouched form still back-dates to *today*,
+    // not to whatever day the screen happened to first compose on.
+    private val tanggalEpochDay = savedState.getStateFlow(KEY_TANGGAL, time.today().toEpochDay())
+    // `null` means "whatever time it's actually saved at" (§6 item 10 /
+    // handoff open thread #4) — not midnight, and not the moment the screen
+    // opened, which would go stale the longer the form sits half-filled.
+    private val waktuMenit = savedState.getStateFlow<Int?>(KEY_WAKTU_MENIT, null)
     private val walletId = savedState.getStateFlow<String?>(KEY_WALLET, null)
     private val menyimpan = savedState.getStateFlow(KEY_MENYIMPAN, false)
 
@@ -72,7 +85,8 @@ class CatatViewModel @Inject constructor(
         val cursor: Int,
         val jenis: String,
         val keterangan: String,
-        val catatan: String,
+        val tanggalEpochDay: Long,
+        val waktuMenit: Int?,
         val walletId: String?,
     )
 
@@ -80,15 +94,25 @@ class CatatViewModel @Inject constructor(
     private val amount: Flow<Pair<String, Int>> =
         combine(nominal, cursor) { text, at -> text to at.coerceIn(0, text.length) }
 
+    /** `combine` only ships typed overloads up to 5 flows, and this form has 6. */
+    private val amountJenisKeterangan: Flow<Triple<Pair<String, Int>, String, String>> =
+        combine(amount, jenis, keterangan) { a, j, k -> Triple(a, j, k) }
+
     private val draft: Flow<Draft> =
-        combine(amount, jenis, keterangan, catatan, walletId) { a, j, k, c, w ->
+        combine(
+            amountJenisKeterangan,
+            tanggalEpochDay,
+            waktuMenit,
+            walletId,
+        ) { (a, j, k), tanggal, waktu, wallet ->
             Draft(
                 nominal = a.first,
                 cursor = a.second,
                 jenis = j,
                 keterangan = k,
-                catatan = c,
-                walletId = w,
+                tanggalEpochDay = tanggal,
+                waktuMenit = waktu,
+                walletId = wallet,
             )
         }
 
@@ -97,13 +121,18 @@ class CatatViewModel @Inject constructor(
         draft,
         menyimpan,
     ) { wallets, form, saving ->
+        val tanggal = LocalDate.ofEpochDay(form.tanggalEpochDay)
         CatatUiState(
             nominalText = form.nominal,
             cursor = form.cursor,
             jenis = Jenis.valueOf(form.jenis),
             keterangan = form.keterangan,
-            catatan = form.catatan,
-            waktu = "Sekarang, ${formatClock(time.nowMillis(), time.zone())}",
+            tanggalEpochDay = form.tanggalEpochDay,
+            tanggalTransaksi = formatDate(tanggal),
+            waktuMenit = form.waktuMenit,
+            waktuDisplay = form.waktuMenit?.let {
+                formatClock(minutesToMillisOnDate(tanggal, it), time.zone())
+            } ?: "Otomatis, saat disimpan",
             wallets = wallets.map { WalletChoice(it.wallet.id, it.wallet.nama) },
             // Cash is the default because this screen exists for cash. The other
             // wallets are still offered: a missed notification has to be
@@ -172,8 +201,15 @@ class CatatViewModel @Inject constructor(
         savedState[KEY_KETERANGAN] = value
     }
 
-    fun setCatatan(value: String) {
-        savedState[KEY_CATATAN] = value
+    /** Picking a date never touches [waktuMenit] — back-dating the day and
+     * leaving the clock on "otomatis" is the common case, not the exception. */
+    fun setTanggal(date: LocalDate) {
+        savedState[KEY_TANGGAL] = date.toEpochDay()
+    }
+
+    /** `null` resets to "otomatis" — the actual save instant, not midnight. */
+    fun setWaktu(menit: Int?) {
+        savedState[KEY_WAKTU_MENIT] = menit
     }
 
     fun setWallet(id: String) {
@@ -185,6 +221,13 @@ class CatatViewModel @Inject constructor(
         if (!state.bisaSimpan) return
         val walletId = state.walletId ?: return
         val amount = state.nominalText.toLongOrNull() ?: return
+
+        val tanggal = LocalDate.ofEpochDay(state.tanggalEpochDay)
+        // Left on "otomatis": the clock reading at the instant of saving, on
+        // the chosen date — not midnight, which would misrepresent when a
+        // same-day entry actually happened.
+        val waktuMillis = state.waktuMenit?.let { minutesToMillisOnDate(tanggal, it) }
+            ?: minutesToMillisOnDate(tanggal, LocalTime.now(time.clock).toSecondOfDay() / 60)
 
         savedState[KEY_MENYIMPAN] = true
         viewModelScope.launch {
@@ -198,7 +241,12 @@ class CatatViewModel @Inject constructor(
                     // with "Tunai", which only repeated the wallet name back in
                     // the row. The list supplies a title at display time.
                     keterangan = state.keterangan.trim(),
-                    catatan = state.catatan,
+                    // Free-text notes are added later from the transaction
+                    // detail sheet, not at entry time — keterangan and catatan
+                    // stay separate (TDD), and Catat's confirmed field list is
+                    // nominal/deskripsi/tanggal/waktu only.
+                    catatan = null,
+                    waktu = waktuMillis,
                 )
             }.onSuccess {
                 tersimpan.send(Unit)
@@ -208,13 +256,20 @@ class CatatViewModel @Inject constructor(
         }
     }
 
+    private fun minutesToMillisOnDate(date: LocalDate, menit: Int): Long =
+        date.atTime(LocalTime.ofSecondOfDay(menit.coerceIn(0, 1439) * 60L))
+            .atZone(time.zone())
+            .toInstant()
+            .toEpochMilli()
+
     private companion object {
         const val MAX_DIGITS = 12
         const val KEY_NOMINAL = "nominal"
         const val KEY_CURSOR = "cursor"
         const val KEY_JENIS = "jenis"
         const val KEY_KETERANGAN = "keterangan"
-        const val KEY_CATATAN = "catatan"
+        const val KEY_TANGGAL = "tanggalEpochDay"
+        const val KEY_WAKTU_MENIT = "waktuMenit"
         const val KEY_WALLET = "walletId"
         const val KEY_MENYIMPAN = "menyimpan"
     }

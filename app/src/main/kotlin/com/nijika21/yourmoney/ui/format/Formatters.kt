@@ -3,6 +3,7 @@ package com.nijika21.yourmoney.ui.format
 import com.nijika21.yourmoney.domain.model.Jenis
 import com.nijika21.yourmoney.domain.money.Rupiah
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -20,6 +21,7 @@ private val indonesian: Locale = Locale.forLanguageTag("id-ID")
 private val dayFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM", indonesian)
 private val clockFormat = DateTimeFormatter.ofPattern("HH:mm", indonesian)
 private val dateTimeFormat = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", indonesian)
+private val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", indonesian)
 
 fun formatDay(millis: Long, zone: ZoneId): String =
     Instant.ofEpochMilli(millis).atZone(zone).format(dayFormat)
@@ -29,6 +31,8 @@ fun formatClock(millis: Long, zone: ZoneId): String =
 
 fun formatDateTime(millis: Long, zone: ZoneId): String =
     Instant.ofEpochMilli(millis).atZone(zone).format(dateTimeFormat)
+
+fun formatDate(date: LocalDate): String = date.format(dateFormat)
 
 /**
  * A ledger row's amount, signed by what the row does to its wallet.

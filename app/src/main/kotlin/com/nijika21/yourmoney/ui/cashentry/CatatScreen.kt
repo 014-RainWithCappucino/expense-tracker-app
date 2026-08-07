@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +48,7 @@ import com.nijika21.yourmoney.ui.components.SegmentedControl
 import com.nijika21.yourmoney.ui.components.TextAction
 import com.nijika21.yourmoney.ui.components.pressable
 import com.nijika21.yourmoney.ui.theme.YourMoneyTheme
+import java.time.LocalDate
 
 /**
  * Screen 02, rebuilt. The first cut had the amount at the top, the keypad at the
@@ -79,7 +82,8 @@ fun CatatScreen(
     onCursor: (Int) -> Unit,
     onJenis: (Jenis) -> Unit,
     onKeterangan: (String) -> Unit,
-    onCatatan: (String) -> Unit,
+    onTanggal: (LocalDate) -> Unit,
+    onWaktu: (Int?) -> Unit,
     onWallet: (String) -> Unit,
     onSimpan: () -> Unit,
     onBatal: () -> Unit,
@@ -90,6 +94,8 @@ fun CatatScreen(
     val dimens = YourMoneyTheme.dimens
 
     var pilihDompet by remember { mutableStateOf(false) }
+    var pilihTanggal by remember { mutableStateOf(false) }
+    var pilihWaktu by remember { mutableStateOf(false) }
     // Two keyboards must never be on screen at once. When a note is being typed
     // the system IME owns the bottom of the screen, so the keypad steps aside.
     val mengetik = WindowInsets.isImeVisible
@@ -133,6 +139,7 @@ fun CatatScreen(
                     label = "Dompet",
                     value = state.wallets.firstOrNull { it.id == state.walletId }?.nama ?: "—",
                     onClick = { pilihDompet = true },
+                    shape = YourMoneyTheme.shapes.cardTop,
                 )
                 RowDivider()
                 FieldRow(
@@ -144,16 +151,22 @@ fun CatatScreen(
                     onValueChange = onKeterangan,
                 )
                 RowDivider()
-                // The third row §6.8 asks for. Unstructured and optional — the
-                // ledger's only "what for" signal, and not a category.
-                FieldRow(
-                    label = "Catatan",
-                    value = state.catatan,
-                    placeholder = "opsional",
-                    onValueChange = onCatatan,
+                // Free-text notes moved out of entry entirely — they're added
+                // later from the transaction detail sheet instead, once there's
+                // an actual row to attach one to. The confirmed field list here
+                // is nominal, keterangan, tanggal transaksi, waktu — nothing else.
+                TapRow(
+                    label = "Tanggal",
+                    value = state.tanggalTransaksi,
+                    onClick = { pilihTanggal = true },
                 )
                 RowDivider()
-                ReadOnlyRow(label = "Waktu", value = state.waktu)
+                TapRow(
+                    label = "Waktu",
+                    value = state.waktuDisplay,
+                    onClick = { pilihWaktu = true },
+                    shape = YourMoneyTheme.shapes.cardBottom,
+                )
             }
 
             Spacer(Modifier.height(dimens.gapM))
@@ -187,6 +200,22 @@ fun CatatScreen(
                 pilihDompet = false
             },
             onDismiss = { pilihDompet = false },
+        )
+    }
+
+    if (pilihTanggal) {
+        TanggalPickerDialog(
+            initialEpochDay = state.tanggalEpochDay,
+            onConfirm = onTanggal,
+            onDismiss = { pilihTanggal = false },
+        )
+    }
+
+    if (pilihWaktu) {
+        WaktuPickerDialog(
+            initialMenit = state.waktuMenit,
+            onConfirm = onWaktu,
+            onDismiss = { pilihWaktu = false },
         )
     }
 }
@@ -243,9 +272,19 @@ private fun WalletPicker(
     }
 }
 
-/** Label left, current value right, opens something on tap. */
+/**
+ * Label left, current value right, opens something on tap. [shape] matches
+ * whichever corners of the card group this row actually touches — the top
+ * row (Dompet) and bottom row (Waktu) round, the rows between stay square.
+ * No shrink on press either way: fixed dividers sit right against these rows.
+ */
 @Composable
-private fun TapRow(label: String, value: String, onClick: () -> Unit) {
+private fun TapRow(
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    shape: Shape = RectangleShape,
+) {
     val colors = YourMoneyTheme.colors
     val type = YourMoneyTheme.typography
 
@@ -253,10 +292,7 @@ private fun TapRow(label: String, value: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            // Always the first row in Catat's card group, so only the top
-            // corners need to match — never the last, never the only row.
-            // No shrink either: fixed dividers sit right below it.
-            .pressable(shape = YourMoneyTheme.shapes.cardTop, scaleDown = 1f, onClick = onClick)
+            .pressable(shape = shape, scaleDown = 1f, onClick = onClick)
             .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -319,28 +355,5 @@ private fun FieldRow(
                 .weight(2f)
                 .onFocusChanged { focused = it.isFocused },
         )
-    }
-}
-
-/**
- * The time being recorded, shown but not editable. It states what will actually be
- * saved rather than implying an editing surface that does not exist — back-dating
- * belongs with corrections, not with entry.
- */
-@Composable
-private fun ReadOnlyRow(label: String, value: String) {
-    val colors = YourMoneyTheme.colors
-    val type = YourMoneyTheme.typography
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .padding(horizontal = YourMoneyTheme.dimens.cardPadding),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, style = type.label, color = colors.textSecondary)
-        Spacer(Modifier.weight(1f))
-        Text(value, style = type.body, color = colors.textSecondary)
     }
 }
